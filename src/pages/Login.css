@@ -1,0 +1,80 @@
+/* Login.css */
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f4f6f8;
+}
+
+.login-box {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 320px;
+  text-align: center;
+}
+
+.login-box h2 {
+  margin-bottom: 1.2rem;
+  color: #333;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.success-message {
+  color: green;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.login-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.login-box label {
+  text-align: left;
+  font-weight: 500;
+  color: #555;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.login-box input:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+.login-box button {
+  padding: 0.6rem;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-box button:hover {
+  background-color: #357abd;
+}
+
+.login-box button:disabled {
+  background-color: #a0c4f4;
+  cursor: not-allowed;
+}
