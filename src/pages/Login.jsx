@@ -1,88 +1,81 @@
 import React, { useState } from "react";
-import "./Login.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Reset messages
-    setError("");
-    setSuccess("");
-
-    // Frontend validation
-    if (!email || !password) {
-      setError("Please fill in all fields");
-      return;
-    }
+    setMessage("Logging in...");
 
     try {
-      setLoading(true);
-
       const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setSuccess("Login successful! Redirecting...");
-        console.log("User data:", data);
-        // You can save token to localStorage if needed
-        // localStorage.setItem("token", data.token);
-      } else {
-        setError(data.message || "Invalid email or password");
+      // if backend sends an error
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Something went wrong");
       }
-    } catch (err) {
-      setError("Server error. Please try again later.");
-    } finally {
-      setLoading(false);
+
+      const data = await res.json();
+      console.log("✅ Login Success:", data);
+      setMessage("Login successful! ✅");
+
+      // Save token to localStorage (optional)
+      localStorage.setItem("token", data.token);
+
+    } catch (error) {
+      console.error("❌ Login Error:", error);
+      setMessage(`Error: ${error.message}`);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
-        <h2>Login</h2>
-        {error && <p className="error-message">{error}</p>}
-        {success && <p className="success-message">{success}</p>}
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-lg rounded-lg p-8 w-96"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
 
-        <form onSubmit={handleLogin}>
-          <label>Email</label>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-2 mb-4 border rounded-md"
+          required
+        />
 
-          <label>Password</label>
-          <input
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-4 py-2 mb-4 border rounded-md"
+          required
+        />
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-      </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
+        >
+          Login
+        </button>
+
+        {message && (
+          <p className="mt-4 text-center text-sm text-red-500">{message}</p>
+        )}
+      </form>
     </div>
   );
 };
 
 export default Login;
-
-
-
 
 
