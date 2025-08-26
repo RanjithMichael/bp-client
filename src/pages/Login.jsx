@@ -16,7 +16,7 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      // if backend sends an error
+      
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Something went wrong");
@@ -26,7 +26,7 @@ const Login = () => {
       console.log("✅ Login Success:", data);
       setMessage("Login successful! ✅");
 
-      // Save token to localStorage (optional)
+      
       localStorage.setItem("token", data.token);
 
     } catch (error) {
