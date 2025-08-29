@@ -8,7 +8,7 @@ import CreatePost from "./pages/CreatePost";
 import Subscriptions from "./pages/Subscriptions";
 import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
-
+import Register from "./pages/Register";
 function App() {
   return (
     <Router>
@@ -24,6 +24,7 @@ function App() {
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             {/* 404 Page */}
             <Route
               path="*"

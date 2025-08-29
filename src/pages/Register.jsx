@@ -1,9 +1,11 @@
 import { useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import api from "../utils/api"; // using your axios instance
 
-export default function Login() {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+const API_URL = "https://your-blog-backend.onrender.com/api/users";
+
+export default function Register() {
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
@@ -14,15 +16,11 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await api.post("/users/login", formData);
-
-      // Save token in localStorage
-      localStorage.setItem("token", data.token);
-
-      setMessage("✅ Login successful! Redirecting...");
-      setTimeout(() => navigate("/"), 2000); // redirect to homepage or dashboard
+      await axios.post(`${API_URL}/register`, formData);
+      setMessage("✅ Registration successful! Redirecting to login...");
+      setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
-      setMessage(error.response?.data?.message || "❌ Invalid credentials");
+      setMessage(error.response?.data?.message || "❌ Something went wrong");
     }
   };
 
@@ -32,7 +30,17 @@ export default function Login() {
         onSubmit={handleSubmit}
         className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+
+        <input
+          type="text"
+          name="name"
+          placeholder="Name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full p-3 border rounded-lg mb-4"
+          required
+        />
 
         <input
           type="email"
@@ -58,23 +66,13 @@ export default function Login() {
           type="submit"
           className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600"
         >
-          Login
+          Register
         </button>
 
         {message && (
           <p className="mt-4 text-center text-sm text-red-500">{message}</p>
         )}
-
-        <p className="text-center mt-4">
-          Don’t have an account?{" "}
-          <a href="/register" className="text-blue-500 hover:underline">
-            Register
-          </a>
-        </p>
       </form>
     </div>
   );
 }
-
-
-
