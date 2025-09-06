@@ -16,7 +16,7 @@ export default function Login() {
     setMessage({ text: "", type: "" });
 
     try {
-      const { data } = await api.post("/users/login", formData);
+      const { data } = await api.post("/auth/login", formData);
 
       // Save token
       localStorage.setItem("token", data.token);
