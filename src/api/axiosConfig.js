@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://bp-server-3.onrender.com/api", // replace with your backend URL
+  baseURL: "https://bp-server-3.onrender.com/api", 
 });
 
 // Add JWT token to requests if logged in
