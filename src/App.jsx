@@ -18,8 +18,7 @@ import Analytics from "./pages/Analytics";
 function App() {
   return (
   <AuthProvider>
-    <Router>
-      <ErrorBoundary>
+    
       <div className="flex flex-col min-h-screen bg-gray-50">
           {/* Header */}
           <header className="sticky top-0 z-50 shadow bg-white">
@@ -48,13 +47,22 @@ function App() {
             <Footer />
           </footer>
         </div>
-      </ErrorBoundary>
-    </Router>
+      
   </AuthProvider>
   );
 }
 
 export default App;
+
+
+
+
+
+
+
+
+
+
 
 
 
