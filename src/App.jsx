@@ -12,36 +12,54 @@ import CreatePost from "./pages/CreatePost";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import AuthorPage from './pages/AuthorPage'; 
-import Analytics from './pages/Analytics';   
+import AuthorPage from "./pages/AuthorPage";
+import Analytics from "./pages/Analytics";
 
 function App() {
   return (
+  <AuthProvider>
     <Router>
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-6">
-          <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/create-post" element={<CreatePost />} />
-            <Route path="/post/:id" element={<PostDetails />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/author/:authorId" element={<AuthorPage />} />
-            <Route path="/analytics" element={<Analytics />} />
-          </Routes>
-          </AuthProvider>
-        </main>
-        <Footer />
-      </div>
+      <ErrorBoundary>
+      <div className="flex flex-col min-h-screen bg-gray-50">
+          {/* Header */}
+          <header className="sticky top-0 z-50 shadow bg-white">
+            <Header />
+          </header>
+          
+
+          {/* Main Content */}
+          <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/create-post" element={<CreatePost />} />
+              <Route path="/post/:id" element={<PostDetails />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/author/:authorId" element={<AuthorPage />} />
+              <Route path="/analytics" element={<Analytics />} />
+            </Routes>
+          </main>
+
+          {/* Footer */}
+          <footer className="mt-auto bg-white shadow-inner">
+            <Footer />
+          </footer>
+        </div>
+      </ErrorBoundary>
     </Router>
+  </AuthProvider>
   );
 }
 
 export default App;
+
+
+
+
+
+
 
 
