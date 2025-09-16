@@ -70,7 +70,7 @@ const CreatePost = () => {
           },
         });
 
-        const imageUrl = res.data.url; // 👈 your backend should return this
+        const imageUrl = res.data.url; // 
 
         // Insert uploaded image at current cursor position
         const quill = quillRef.current.getEditor();
