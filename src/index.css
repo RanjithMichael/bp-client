@@ -4,7 +4,8 @@
 
 /* Optional custom styles */
 body {
-  @apply bg-gray-50 text-gray-900;
+  background-color: #f9fafb; /* Tailwind bg-gray-50 */
+  color: #111827; /* Tailwind text-gray-900 */
   font-family: 'Inter', sans-serif;
 }
 
