@@ -20,7 +20,7 @@ const PostCard = ({ post }) => {
   return (
     <Link
       to={`/post/${post._id}`} // ✅ Navigates to PostDetails page
-      className="block bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col"
+      className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col"
     >
       {/* Thumbnail */}
       {post?.image && (
