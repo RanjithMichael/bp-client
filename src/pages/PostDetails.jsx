@@ -1,103 +1,106 @@
 import { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import API from "../api/axiosConfig";
-import Comment from "../components/Comment";
 import { AuthContext } from "../context/AuthContext";
+import SubscribeButton from "../components/SubscribeButton";
+import AnalyticsChart from "../components/AnalyticsChart";
 
 const PostDetails = () => {
   const { id } = useParams();
-  const [post, setPost] = useState(null);
-  const [commentText, setCommentText] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { user } = useContext(AuthContext);
+  const [post, setPost] = useState(null);
+  const [likes, setLikes] = useState(0);
+  const [shares, setShares] = useState(0);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        setLoading(true);
-        const res = await API.get(`/posts/${id}`);
-        setPost(res.data);
+        const { data } = await API.get(`/posts/${id}`);
+        setPost(data);
+        setLikes(data.likes || 0);
+        setShares(data.shares || 0);
       } catch (err) {
-        console.error("❌ Error fetching post:", err);
-        setError("Failed to load post. Please try again later.");
-      } finally {
-        setLoading(false);
+        console.error("Error fetching post:", err);
       }
     };
     fetchPost();
   }, [id]);
 
-  const handleComment = async () => {
-    if (!user) return alert("⚠️ Please log in to comment");
-    if (!commentText.trim()) return;
-
+  const handleLike = async () => {
     try {
-      const res = await API.post(`/posts/${id}/comments`, { text: commentText });
-      setPost((prev) => ({ ...prev, comments: res.data }));
-      setCommentText("");
+      const { data } = await API.post(
+        `/posts/${id}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${user?.token}` } }
+      );
+      setLikes(data.likes);
     } catch (err) {
-      console.error("❌ Error posting comment:", err);
-      alert("Failed to add comment. Try again later.");
+      console.error("Error liking post:", err);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="animate-pulse text-gray-600">⏳ Loading post...</p>
-      </div>
-    );
-  }
+  const handleShare = async () => {
+    try {
+      const { data } = await API.post(
+        `/posts/${id}/share`,
+        {},
+        { headers: { Authorization: `Bearer ${user?.token}` } }
+      );
+      setShares(data.shares);
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
+      // For now just copy link to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      alert("Post link copied! Share it anywhere.");
+    } catch (err) {
+      console.error("Error sharing post:", err);
+    }
+  };
 
-  if (!post) return null;
+  if (!post) return <p className="text-center mt-4">Loading post...</p>;
 
   return (
-    <div className="container mx-auto p-4 max-w-3xl">
+    <div className="max-w-3xl mx-auto mt-6">
       {/* Post Title */}
       <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
-      <p className="text-gray-700 mb-6 leading-relaxed">{post.content}</p>
 
-      {/* Comments Section */}
-      <h2 className="text-xl font-semibold mb-3">💬 Comments</h2>
-      <div className="space-y-3 mb-6">
-        {post.comments && post.comments.length > 0 ? (
-          post.comments.map((comment) => (
-            <Comment key={comment._id} comment={comment} />
-          ))
-        ) : (
-          <p className="text-gray-500">No comments yet. Be the first!</p>
-        )}
+      {/* Author + Date */}
+      <p className="text-gray-600 mb-4">
+        By {post.author?.name} • {new Date(post.createdAt).toLocaleDateString()}
+      </p>
+
+      {/* Post Content */}
+      <div
+        className="prose"
+        dangerouslySetInnerHTML={{ __html: post.content }}
+      />
+
+      {/* ✅ Subscribe button */}
+      {user && (
+        <div className="mt-4">
+          <SubscribeButton authorId={post.author?._id} category={post.category} />
+        </div>
+      )}
+
+      {/* ✅ Like & Share Buttons */}
+      <div className="flex items-center gap-4 mt-6">
+        <button
+          onClick={handleLike}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          👍 Like ({likes})
+        </button>
+        <button
+          onClick={handleShare}
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+        >
+          🔗 Share ({shares})
+        </button>
       </div>
 
-      {/* Comment Form */}
-      {user ? (
-        <div className="flex flex-col gap-2">
-          <textarea
-            placeholder="Add a comment..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            className="border p-3 rounded-lg shadow-sm focus:ring focus:ring-blue-300 resize-none"
-            rows="3"
-          />
-          <button
-            onClick={handleComment}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg w-32 transition"
-          >
-            Comment
-          </button>
-        </div>
-      ) : (
-        <p className="text-gray-500 italic">🔑 Please log in to post a comment.</p>
-      )}
+      {/* ✅ Analytics Chart */}
+      <div className="mt-8">
+        <AnalyticsChart />
+      </div>
     </div>
   );
 };

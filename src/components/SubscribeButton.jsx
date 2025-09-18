@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from '../axiosConfig';
+import axios from '../api/axiosConfig';
 
 export default function Subscription({ authorId }) {
   const [subscribed, setSubscribed] = useState(false);

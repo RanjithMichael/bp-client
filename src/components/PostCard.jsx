@@ -1,6 +1,6 @@
 /* src/components/PostCard.jsx */
 import { Link } from "react-router-dom";
-import { User, Calendar } from "lucide-react";
+import { User, Calendar, ThumbsUp, Share2 } from "lucide-react";
 
 const PostCard = ({ post }) => {
   const title = post?.title || "Untitled Post";
@@ -18,7 +18,10 @@ const PostCard = ({ post }) => {
     : "Unknown Date";
 
   return (
-    <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col">
+    <Link
+      to={`/post/${post._id}`} // ✅ Navigates to PostDetails page
+      className="block bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col"
+    >
       {/* Thumbnail */}
       {post?.image && (
         <img
@@ -38,27 +41,35 @@ const PostCard = ({ post }) => {
         {/* Excerpt */}
         <p className="text-gray-600 text-sm mb-4 line-clamp-3">{content}</p>
 
-        {/* Author + Date + Read More */}
+        {/* Author + Date + Engagement */}
         <div className="flex justify-between items-center mt-auto">
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex flex-col gap-1 text-xs text-gray-500">
             <span className="flex items-center gap-1">
               <User className="w-4 h-4" /> {author}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" /> {date}
             </span>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="flex items-center gap-1">
+                <ThumbsUp className="w-4 h-4 text-blue-500" />{" "}
+                {post.analytics?.likes || 0}
+              </span>
+              <span className="flex items-center gap-1">
+                <Share2 className="w-4 h-4 text-purple-500" />{" "}
+                {post.analytics?.shares || 0}
+              </span>
+            </div>
           </div>
 
-          <Link
-            to={`/posts/${post._id}`}
-            className="text-blue-600 font-medium hover:underline"
-          >
+          <span className="text-blue-600 font-medium hover:underline">
             Read More →
-          </Link>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
 export default PostCard;
+
