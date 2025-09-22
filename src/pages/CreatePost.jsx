@@ -12,9 +12,11 @@ const CreatePost = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
-  // Validation function
+  // ✅ Validation
   const validate = () => {
     const newErrors = {};
 
@@ -22,7 +24,6 @@ const CreatePost = () => {
       newErrors.title = "Title must be at least 5 characters.";
     }
 
-    // Strip HTML tags from content to check real length
     const plainContent = content.replace(/<[^>]+>/g, "").trim();
     if (!plainContent || plainContent.length < 20) {
       newErrors.content = "Content must be at least 20 characters.";
@@ -35,60 +36,110 @@ const CreatePost = () => {
     return newErrors;
   };
 
+  // ✅ Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
+    setLoading(true);
     try {
       await API.post(
         "/posts",
-        { title, content, category },
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        {
+          title,
+          content,
+          category,
+          tags: tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        },
+        { headers: { Authorization: `Bearer ${user?.token}` } }
       );
-      navigate("/"); // Redirect after successful creation
+
+      navigate("/");
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Post creation failed");
+      console.error("Post creation failed:", err);
+      setErrors({ api: err.response?.data?.message || "Post creation failed" });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 p-4">
-      <h1 className="text-2xl font-bold mb-4">Create New Post</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <div className="max-w-3xl mx-auto mt-12 p-6 bg-white shadow-lg rounded-xl">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">📝 New Post</h1>
+
+      {errors.api && (
+        <div className="mb-4 p-3 rounded bg-red-100 text-red-700 text-sm">
+          {errors.api}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Title */}
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="border p-2 rounded"
-        />
-        {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">Title</label>
+          <input
+            type="text"
+            placeholder="Enter a catchy title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {errors.title && (
+            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+          )}
+        </div>
 
         {/* Content */}
-        <ReactQuill value={content} onChange={setContent} />
-        {errors.content && <p className="text-red-500 text-sm">{errors.content}</p>}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">Content</label>
+          <ReactQuill value={content} onChange={setContent} className="bg-white" />
+          {errors.content && (
+            <p className="text-red-500 text-sm mt-1">{errors.content}</p>
+          )}
+        </div>
 
         {/* Category */}
-        <input
-          type="text"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="border p-2 rounded"
-        />
-        {errors.category && <p className="text-red-500 text-sm">{errors.category}</p>}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">Category</label>
+          <input
+            type="text"
+            placeholder="e.g. Technology, Lifestyle"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {errors.category && (
+            <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+          )}
+        </div>
 
+        {/* Tags */}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">Tags</label>
+          <input
+            type="text"
+            placeholder="e.g. react, tailwind, node (comma separated)"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Submit Button */}
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          disabled={loading}
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
         >
-          Create Post
+          {loading ? "Creating..." : "Create Post"}
         </button>
       </form>
     </div>
