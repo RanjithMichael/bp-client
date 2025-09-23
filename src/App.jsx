@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -18,7 +18,7 @@ import Analytics from "./pages/Analytics";
 function App() {
   return (
   <AuthProvider>
-    
+      <Router>
       <div className="flex flex-col min-h-screen bg-gray-50">
           {/* Header */}
           <header className="sticky top-0 z-50 shadow bg-white">
@@ -47,7 +47,7 @@ function App() {
             <Footer />
           </footer>
         </div>
-      
+      </Router>
   </AuthProvider>
   );
 }

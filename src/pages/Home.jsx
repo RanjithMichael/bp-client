@@ -72,12 +72,7 @@ const Home = () => {
             className="w-full sm:w-1/2 border border-gray-300 p-3 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
 
-          <Link
-            to="/create"
-            className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-lg shadow-md transition duration-200"
-          >
-            ➕ New Post
-          </Link>
+          
         </div>
 
         {/* Posts Grid */}

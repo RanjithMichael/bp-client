@@ -1,3 +1,4 @@
+
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axiosConfig";
@@ -15,6 +16,7 @@ const CreatePost = () => {
   const [tags, setTags] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loginMessage, setLoginMessage] = useState(""); // message for non-logged-in users
 
   // ✅ Validation
   const validate = () => {
@@ -40,6 +42,11 @@ const CreatePost = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!user) {
+      setLoginMessage("⚠️ You must be logged in to create a post.");
+      return;
+    }
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -62,7 +69,7 @@ const CreatePost = () => {
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
 
-      navigate("/");
+      navigate("/"); // redirect after successful post
     } catch (err) {
       console.error("Post creation failed:", err);
       setErrors({ api: err.response?.data?.message || "Post creation failed" });
@@ -74,6 +81,13 @@ const CreatePost = () => {
   return (
     <div className="max-w-3xl mx-auto mt-12 p-6 bg-white shadow-lg rounded-xl">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">📝 New Post</h1>
+
+      {/* Login message for non-logged-in users */}
+      {loginMessage && (
+        <div className="mb-4 p-3 rounded bg-yellow-100 text-yellow-700 text-sm">
+          {loginMessage}
+        </div>
+      )}
 
       {errors.api && (
         <div className="mb-4 p-3 rounded bg-red-100 text-red-700 text-sm">
