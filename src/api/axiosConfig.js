@@ -4,16 +4,16 @@ const API = axios.create({
   baseURL: "https://bp-server-4.onrender.com/api", 
 });
 
-// Add JWT token to requests if logged in
-API.interceptors.request.use(config => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+API.interceptors.request.use((config) => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (user?.token) {
+    config.headers.Authorization = `Bearer ${user.token}`;
   }
   return config;
 });
 
 export default API;
+
 
 
 
