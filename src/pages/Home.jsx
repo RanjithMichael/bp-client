@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import API from "../api/axiosConfig";
 import PostCard from "../components/PostCard";
+import API from "../api/axiosConfig";
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
@@ -13,8 +12,9 @@ const Home = () => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const res = await API.get("/posts");
+        const res = await API.get(`/posts?search=${search}`);
         setPosts(res.data);
+        setError(null);
       } catch (err) {
         console.error("❌ Error fetching posts:", err);
         setError("Failed to fetch posts. Please try again later.");
@@ -23,12 +23,13 @@ const Home = () => {
       }
     };
 
-    fetchPosts();
-  }, []);
+    // Debounce the search input by 500ms
+    const delayDebounceFn = setTimeout(() => {
+      fetchPosts();
+    }, 500);
 
-  const filteredPosts = posts.filter((post) =>
-    (post?.title || "").toLowerCase().includes(search.toLowerCase())
-  );
+    return () => clearTimeout(delayDebounceFn); // Cleanup if input changes
+  }, [search]);
 
   if (loading) {
     return (
@@ -50,10 +51,10 @@ const Home = () => {
   return (
     <div
       className="
-        min-h-screen 
-        bg-[url('/images/Big-Ben-At-Night.jpg')]   /* 👈 Tailwind background image */
-        bg-cover 
-        bg-center 
+        min-h-screen
+        bg-[url('/images/Big-Ben-At-Night.jpg')]
+        bg-cover
+        bg-center
         relative
       "
     >
@@ -71,14 +72,12 @@ const Home = () => {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-1/2 border border-gray-300 p-3 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-
-          
         </div>
 
         {/* Posts Grid */}
-        {filteredPosts.length > 0 ? (
+        {posts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.map((post) => (
+            {posts.map((post) => (
               <PostCard key={post._id} post={post} />
             ))}
           </div>
@@ -93,5 +92,6 @@ const Home = () => {
 };
 
 export default Home;
+
 
       
