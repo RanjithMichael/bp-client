@@ -7,6 +7,7 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import SearchPage from "./pages/SearchPage";
 import PostDetails from "./pages/PostDetails";
 import CreatePost from "./pages/CreatePost";
 import Profile from "./pages/Profile";
@@ -32,10 +33,11 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/search" element={<SearchPage />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/create-post" element={<CreatePost />} />
-              <Route path="/post/:id" element={<PostDetails />} />
+              <Route path="/posts/:id" element={<PostDetails />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/author/:authorId" element={<AuthorPage />} />
               <Route path="/analytics" element={<Analytics />} />

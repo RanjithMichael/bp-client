@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axiosConfig";
@@ -17,15 +16,17 @@ const PostDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch post data
   useEffect(() => {
     const fetchPost = async () => {
       try {
         setLoading(true);
-        const { data } = await API.get(`/posts/${id}`);
+        setError(null);
+
+        const { data } = await API.get(`/posts/${id}`); // token auto-attached
         setPost(data);
         setLikes(data.likes || 0);
         setShares(data.shares || 0);
-        setError(null);
       } catch (err) {
         console.error("Error fetching post:", err);
         if (err.response?.status === 401) {
@@ -40,41 +41,40 @@ const PostDetails = () => {
         setLoading(false);
       }
     };
-    fetchPost();
+
+    if (id) fetchPost();
   }, [id, navigate]);
 
+  // Handle Like
   const handleLike = async () => {
     if (!user) {
       alert("Please login to like this post.");
       return;
     }
+
     try {
-      const { data } = await API.post(
-        `/posts/${id}/like`,
-        {},
-        { headers: { Authorization: `Bearer ${user?.token}` } }
-      );
+      const { data } = await API.post(`/posts/${id}/like`);
       setLikes(data.likes);
     } catch (err) {
       console.error("Error liking post:", err);
       if (err.response?.status === 401) {
         alert("You are not authorized. Please login.");
         navigate("/login");
+      } else {
+        alert("Failed to like the post. Please try again.");
       }
     }
   };
 
+  // Handle Share
   const handleShare = async () => {
     if (!user) {
       alert("Please login to share this post.");
       return;
     }
+
     try {
-      const { data } = await API.post(
-        `/posts/${id}/share`,
-        {},
-        { headers: { Authorization: `Bearer ${user?.token}` } }
-      );
+      const { data } = await API.post(`/posts/${id}/share`);
       setShares(data.shares);
       navigator.clipboard.writeText(window.location.href);
       alert("Post link copied! Share it anywhere.");
@@ -83,26 +83,29 @@ const PostDetails = () => {
       if (err.response?.status === 401) {
         alert("You are not authorized. Please login.");
         navigate("/login");
+      } else {
+        alert("Failed to share the post. Please try again.");
       }
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
-        <p className="ml-4 text-gray-200 text-lg">Loading post...</p>
-      </div>
-    );
-  }
+  return (
+    <div className="flex flex-col justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
+      <p className="text-gray-700 dark:text-gray-200 text-lg">Loading post...</p>
+    </div>
+  );
+}
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-900">
-        <p className="text-red-400 text-lg">{error}</p>
-      </div>
-    );
-  }
+// Error
+if (error) {
+  return (
+    <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+      <p className="text-red-500 text-lg">{error}</p>
+    </div>
+  );
+}
 
   return (
     <div className="max-w-3xl mx-auto mt-6">
@@ -115,10 +118,7 @@ const PostDetails = () => {
       </p>
 
       {/* Post Content */}
-      <div
-        className="prose"
-        dangerouslySetInnerHTML={{ __html: post.content }}
-      />
+      <div className="prose" dangerouslySetInnerHTML={{ __html: post.content }} />
 
       {/* Subscribe Button */}
       {user && (
@@ -152,3 +152,4 @@ const PostDetails = () => {
 };
 
 export default PostDetails;
+

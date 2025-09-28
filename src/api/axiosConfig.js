@@ -1,29 +1,23 @@
 import axios from "axios";
 
-const BASE_URL = "https://bp-server-4.onrender.com/api"; 
-
 const API = axios.create({
-  baseURL: BASE_URL,
+  baseURL: "https://bp-server-4.onrender.com/api", 
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Add a request interceptor to automatically include JWT token
-API.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token"); 
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+// Interceptor to attach token to every request
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token"); // get token from localStorage
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
 export default API;
+
 
 
 
