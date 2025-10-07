@@ -6,7 +6,7 @@ import SubscribeButton from "../components/SubscribeButton";
 import AnalyticsChart from "../components/AnalyticsChart";
 
 const PostDetails = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -16,17 +16,16 @@ const PostDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch post data
+  // 🔸 Fetch post by slug
   useEffect(() => {
     const fetchPost = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        const { data } = await API.get(`/posts/${id}`); // token auto-attached
+        const { data } = await API.get(`/posts/slug/${slug}`);
         setPost(data);
-        setLikes(data.likes || 0);
-        setShares(data.shares || 0);
+        setLikes(data.analytics?.likes || 0);
+        setShares(data.analytics?.shares || 0);
       } catch (err) {
         console.error("Error fetching post:", err);
         if (err.response?.status === 401) {
@@ -42,23 +41,24 @@ const PostDetails = () => {
       }
     };
 
-    if (id) fetchPost();
-  }, [id, navigate]);
+    if (slug) fetchPost();
+  }, [slug, navigate]);
 
-  // Handle Like
+  // 👍 Handle Like
   const handleLike = async () => {
     if (!user) {
       alert("Please login to like this post.");
+      navigate("/login");
       return;
     }
 
     try {
-      const { data } = await API.post(`/posts/${id}/like`);
+      const { data } = await API.post(`/posts/${post._id}/like`);
       setLikes(data.likes);
     } catch (err) {
       console.error("Error liking post:", err);
       if (err.response?.status === 401) {
-        alert("You are not authorized. Please login.");
+        alert("Session expired. Please login again.");
         navigate("/login");
       } else {
         alert("Failed to like the post. Please try again.");
@@ -66,22 +66,25 @@ const PostDetails = () => {
     }
   };
 
-  // Handle Share
+  // 🔗 Handle Share
   const handleShare = async () => {
     if (!user) {
       alert("Please login to share this post.");
+      navigate("/login");
       return;
     }
 
     try {
-      const { data } = await API.post(`/posts/${id}/share`);
+      const { data } = await API.post(`/posts/${post._id}/share`);
       setShares(data.shares);
-      navigator.clipboard.writeText(window.location.href);
-      alert("Post link copied! Share it anywhere.");
+
+      // ✅ Safer clipboard handling
+      await navigator.clipboard.writeText(window.location.href);
+      alert("✅ Post link copied to clipboard!");
     } catch (err) {
       console.error("Error sharing post:", err);
       if (err.response?.status === 401) {
-        alert("You are not authorized. Please login.");
+        alert("Session expired. Please login again.");
         navigate("/login");
       } else {
         alert("Failed to share the post. Please try again.");
@@ -90,44 +93,66 @@ const PostDetails = () => {
   };
 
   if (loading) {
-  return (
-    <div className="flex flex-col justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
-      <p className="text-gray-700 dark:text-gray-200 text-lg">Loading post...</p>
-    </div>
-  );
-}
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
+        <p className="text-gray-700 dark:text-gray-200 text-lg">
+          Loading post...
+        </p>
+      </div>
+    );
+  }
 
-// Error
-if (error) {
-  return (
-    <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
-      <p className="text-red-500 text-lg">{error}</p>
-    </div>
-  );
-}
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+        <p className="text-red-500 text-lg">{error}</p>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+        <p className="text-gray-600 text-lg">Post not available.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto mt-6">
-      {/* Post Title */}
+    <div className="max-w-3xl mx-auto mt-6 px-4 pb-10">
+      {/* 📝 Title */}
       <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
 
-      {/* Author + Date */}
+      {/* 👤 Author & Date */}
       <p className="text-gray-600 mb-4">
-        By {post.author?.name} • {new Date(post.createdAt).toLocaleDateString()}
+        By{" "}
+        <a
+          href={`/author/${post.author?._id}`}
+          className="text-blue-500 hover:underline"
+        >
+          {post.author?.name || "Unknown Author"}
+        </a>{" "}
+        • {new Date(post.createdAt).toLocaleDateString()}
       </p>
 
-      {/* Post Content */}
-      <div className="prose" dangerouslySetInnerHTML={{ __html: post.content }} />
+      {/* 📄 Content */}
+      <div
+        className="prose max-w-none"
+        dangerouslySetInnerHTML={{ __html: post.content }}
+      />
 
-      {/* Subscribe Button */}
+      {/* 🔔 Subscribe Button */}
       {user && (
         <div className="mt-4">
-          <SubscribeButton authorId={post.author?._id} category={post.category} />
+          <SubscribeButton
+            authorId={post.author?._id}
+            category={post.category}
+          />
         </div>
       )}
 
-      {/* Like & Share Buttons */}
+      {/* 👍 Like & 🔗 Share */}
       <div className="flex items-center gap-4 mt-6">
         <button
           onClick={handleLike}
@@ -145,11 +170,10 @@ if (error) {
 
       {/* Analytics Chart */}
       <div className="mt-8">
-        <AnalyticsChart />
+        <AnalyticsChart postId={post._id} />
       </div>
     </div>
   );
 };
 
 export default PostDetails;
-

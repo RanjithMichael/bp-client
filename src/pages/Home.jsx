@@ -78,6 +78,7 @@ const Home = () => {
         {posts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => (
+              // Pass the slug instead of _id
               <PostCard key={post._id} post={post} />
             ))}
           </div>
@@ -92,6 +93,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
-      

@@ -1,22 +1,42 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://bp-server-4.onrender.com/api", 
+  baseURL: "https://bp-server-4.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Interceptor to attach token to every request
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token"); // get token from localStorage
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Request Interceptor → Attach token automatically
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response Interceptor → Handle expired / invalid tokens globally
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      if (window.location.pathname !== "/login") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export default API;
+
+
 
 
 

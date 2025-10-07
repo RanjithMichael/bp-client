@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import ProtectedRoute from "./components/ProtectedRoute"; // ✅ Import ProtectedRoute
 
 // Pages
 import Home from "./pages/Home";
@@ -18,29 +19,66 @@ import Analytics from "./pages/Analytics";
 
 function App() {
   return (
-  <AuthProvider>
+    <AuthProvider>
       <Router>
-      <div className="flex flex-col min-h-screen bg-gray-50">
+        <div className="flex flex-col min-h-screen bg-gray-50">
           {/* Header */}
           <header className="sticky top-0 z-50 shadow bg-white">
             <Header />
           </header>
-          
 
           {/* Main Content */}
           <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <Routes>
+              {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/create-post" element={<CreatePost />} />
-              <Route path="/posts/:id" element={<PostDetails />} />
-              <Route path="/profile" element={<Profile />} />
+
+              {/* Protected / Auth Routes */}
+              <Route
+                path="/create-post"
+                element={
+                  <ProtectedRoute>
+                    <CreatePost />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute>
+                    <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Posts */}
+              <Route path="/posts/:slug" element={<PostDetails />} />
+
+              {/* Author Pages */}
               <Route path="/author/:authorId" element={<AuthorPage />} />
-              <Route path="/analytics" element={<Analytics />} />
+
+              {/* 404 Page */}
+              <Route
+                path="*"
+                element={
+                  <div className="text-center py-20 text-gray-600 text-xl">
+                    404 - Page Not Found
+                  </div>
+                }
+              />
             </Routes>
           </main>
 
@@ -50,7 +88,7 @@ function App() {
           </footer>
         </div>
       </Router>
-  </AuthProvider>
+    </AuthProvider>
   );
 }
 
