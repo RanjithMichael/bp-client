@@ -1,4 +1,3 @@
-/* src/components/PostCard.jsx */
 import { Link } from "react-router-dom";
 import { User, Calendar, ThumbsUp, Share2 } from "lucide-react";
 
@@ -19,17 +18,15 @@ const PostCard = ({ post }) => {
 
   return (
     <Link
-      to={`/post/${post._id}`} // ✅ Navigates to PostDetails page
+      to={`/post/${post.slug}`} 
       className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col"
     >
       {/* Thumbnail */}
-      {post?.image && (
-        <img
-          src={post.image}
-          alt={title}
-          className="w-full h-48 object-cover"
-        />
-      )}
+      <img
+        src={post?.image || "/default-post.png"}
+        alt={title}
+        className="w-full h-48 object-cover"
+      />
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-grow">
@@ -42,7 +39,7 @@ const PostCard = ({ post }) => {
         <p className="text-gray-600 text-sm mb-4 line-clamp-3">{content}</p>
 
         {/* Author + Date + Engagement */}
-        <div className="flex justify-between items-center mt-auto">
+        <div className="flex justify-between items-end mt-auto">
           <div className="flex flex-col gap-1 text-xs text-gray-500">
             <span className="flex items-center gap-1">
               <User className="w-4 h-4" /> {author}
@@ -72,4 +69,6 @@ const PostCard = ({ post }) => {
 };
 
 export default PostCard;
+
+
 

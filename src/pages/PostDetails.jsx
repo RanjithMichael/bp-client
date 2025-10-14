@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 import SubscribeButton from "../components/SubscribeButton";
@@ -31,6 +31,7 @@ const PostDetails = () => {
         if (err.response?.status === 401) {
           setError("You are not authorized to view this post.");
           navigate("/login");
+          return;
         } else if (err.response?.status === 404) {
           setError("Post not found.");
         } else {
@@ -78,8 +79,8 @@ const PostDetails = () => {
       const { data } = await API.post(`/posts/${post._id}/share`);
       setShares(data.shares);
 
-      // Safer clipboard handling
-      await navigator.clipboard.writeText(window.location.href);
+      // Copy post URL to clipboard
+      await navigator.clipboard.writeText(`${window.location.origin}/post/${post.slug}`);
       alert("✅ Post link copied to clipboard!");
     } catch (err) {
       console.error("Error sharing post:", err);
@@ -94,18 +95,16 @@ const PostDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
-        <p className="text-gray-700 dark:text-gray-200 text-lg">
-          Loading post...
-        </p>
+        <p className="text-gray-700 text-lg">Loading post...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex justify-center items-center h-screen bg-gray-50">
         <p className="text-red-500 text-lg">{error}</p>
       </div>
     );
@@ -113,7 +112,7 @@ const PostDetails = () => {
 
   if (!post) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex justify-center items-center h-screen bg-gray-50">
         <p className="text-gray-600 text-lg">Post not available.</p>
       </div>
     );
@@ -127,12 +126,12 @@ const PostDetails = () => {
       {/* 👤 Author & Date */}
       <p className="text-gray-600 mb-4">
         By{" "}
-        <a
-          href={`/author/${post.author?._id}`}
+        <Link
+          to={`/author/${post.author?._id}`}
           className="text-blue-500 hover:underline"
         >
           {post.author?.name || "Unknown Author"}
-        </a>{" "}
+        </Link>{" "}
         • {new Date(post.createdAt).toLocaleDateString()}
       </p>
 
@@ -168,7 +167,7 @@ const PostDetails = () => {
         </button>
       </div>
 
-      {/* Analytics Chart */}
+      {/* 📊 Analytics Chart */}
       <div className="mt-8">
         <AnalyticsChart postId={post._id} />
       </div>
@@ -177,3 +176,4 @@ const PostDetails = () => {
 };
 
 export default PostDetails;
+

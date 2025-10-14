@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import API from "../api/axiosConfig";
 import PostCard from "../components/PostCard";
@@ -97,12 +97,13 @@ export default function AuthorPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((post) => (
-            <PostCard key={post._id} post={post} />
+            <Link key={post._id} to={`/post/${post.slug}`}>
+              <PostCard post={post} />
+            </Link>
           ))}
         </div>
       )}
     </div>
   );
 }
-
 
