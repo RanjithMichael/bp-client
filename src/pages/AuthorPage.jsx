@@ -4,7 +4,7 @@ import API from "../api/axiosConfig";
 import PostCard from "../components/PostCard";
 
 export default function AuthorPage() {
-  const { authorId } = useParams();
+  const { authorId } = useParams(); 
   const [author, setAuthor] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,10 +14,15 @@ export default function AuthorPage() {
     const fetchAuthorAndPosts = async () => {
       try {
         setLoading(true);
-        const { data } = await API.get(`/users/${authorId}`);
-        setAuthor(data.user || null);
-        setPosts(data.posts || []);
         setError("");
+
+        // Fetch author data
+        const { data: authorData } = await API.get(`/users/${authorId}`);
+        setAuthor(authorData);
+
+        // Fetch posts by author
+        const { data: postData } = await API.get(`/posts/author/${authorId}`);
+        setPosts(postData);
       } catch (err) {
         console.error("Error fetching author or posts:", err);
         if (err.response?.status === 404) {
@@ -35,25 +40,19 @@ export default function AuthorPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[50vh] text-gray-600">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-        <span>Loading author details...</span>
+      <div className="flex flex-col justify-center items-center min-h-[50vh] text-gray-600">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 mb-3"></div>
+        <p>Fetching author details...</p>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="p-6 text-center text-red-500 font-medium">{error}</div>
-    );
+    return <div className="p-6 text-center text-red-500 font-medium">{error}</div>;
   }
 
   if (!author) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        Author information not available.
-      </div>
-    );
+    return <div className="p-6 text-center text-gray-500">Author information not available.</div>;
   }
 
   return (
@@ -62,24 +61,25 @@ export default function AuthorPage() {
       <div className="mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-4">
         <img
           src={author.profilePicture || "/default-avatar.png"}
-          alt={author.name}
+          onError={(e) => (e.target.src = "/default-avatar.png")}
+          alt={author.name || "Author avatar"}
           className="w-28 h-28 rounded-full object-cover border border-gray-300"
         />
         <div>
           <h2 className="text-2xl font-bold">{author.name}</h2>
           <p className="text-gray-600 mt-1">{author.bio || "No bio available."}</p>
 
-          {author.socialLinks && author.socialLinks.length > 0 && (
+          {Array.isArray(author.socialLinks) && author.socialLinks.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-3">
-              {author.socialLinks.map((link) => (
+              {author.socialLinks.map((link, index) => (
                 <a
-                  key={link.platform}
-                  href={link.url}
+                  key={index}
+                  href={link.url || link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:underline capitalize"
                 >
-                  {link.platform}
+                  {link.platform || link.replace(/^https?:\/\//, "")}
                 </a>
               ))}
             </div>
@@ -104,4 +104,5 @@ export default function AuthorPage() {
     </div>
   );
 }
+
 

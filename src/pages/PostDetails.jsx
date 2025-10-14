@@ -78,7 +78,7 @@ const PostDetails = () => {
       const { data } = await API.post(`/posts/${post._id}/share`);
       setShares(data.shares);
 
-      // ✅ Safer clipboard handling
+      // Safer clipboard handling
       await navigator.clipboard.writeText(window.location.href);
       alert("✅ Post link copied to clipboard!");
     } catch (err) {

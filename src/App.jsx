@@ -65,7 +65,7 @@ function App() {
               />
 
               {/* Posts */}
-              <Route path="/posts/:slug" element={<PostDetails />} />
+              <Route path="/posts/:id" element={<PostDetails />} />
 
               {/* Author Pages */}
               <Route path="/author/:authorId" element={<AuthorPage />} />
