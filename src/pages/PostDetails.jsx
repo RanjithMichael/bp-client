@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 import SubscribeButton from "../components/SubscribeButton";
@@ -8,7 +8,6 @@ import AnalyticsChart from "../components/AnalyticsChart";
 const PostDetails = () => {
   const { slug } = useParams();
   const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
 
   const [post, setPost] = useState(null);
   const [likes, setLikes] = useState(0);
@@ -16,23 +15,20 @@ const PostDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🔸 Fetch post by slug
+  // Fetch post by slug
   useEffect(() => {
     const fetchPost = async () => {
       try {
         setLoading(true);
         setError(null);
+
         const { data } = await API.get(`/posts/slug/${slug}`);
         setPost(data);
         setLikes(data.analytics?.likes || 0);
         setShares(data.analytics?.shares || 0);
       } catch (err) {
         console.error("Error fetching post:", err);
-        if (err.response?.status === 401) {
-          setError("You are not authorized to view this post.");
-          navigate("/login");
-          return;
-        } else if (err.response?.status === 404) {
+        if (err.response?.status === 404) {
           setError("Post not found.");
         } else {
           setError("Failed to fetch post. Please try again later.");
@@ -43,13 +39,12 @@ const PostDetails = () => {
     };
 
     if (slug) fetchPost();
-  }, [slug, navigate]);
+  }, [slug]);
 
   // 👍 Handle Like
   const handleLike = async () => {
     if (!user) {
       alert("Please login to like this post.");
-      navigate("/login");
       return;
     }
 
@@ -58,12 +53,7 @@ const PostDetails = () => {
       setLikes(data.likes);
     } catch (err) {
       console.error("Error liking post:", err);
-      if (err.response?.status === 401) {
-        alert("Session expired. Please login again.");
-        navigate("/login");
-      } else {
-        alert("Failed to like the post. Please try again.");
-      }
+      alert(err.response?.data?.message || "Failed to like post.");
     }
   };
 
@@ -71,7 +61,6 @@ const PostDetails = () => {
   const handleShare = async () => {
     if (!user) {
       alert("Please login to share this post.");
-      navigate("/login");
       return;
     }
 
@@ -84,12 +73,7 @@ const PostDetails = () => {
       alert("✅ Post link copied to clipboard!");
     } catch (err) {
       console.error("Error sharing post:", err);
-      if (err.response?.status === 401) {
-        alert("Session expired. Please login again.");
-        navigate("/login");
-      } else {
-        alert("Failed to share the post. Please try again.");
-      }
+      alert(err.response?.data?.message || "Failed to share post.");
     }
   };
 
@@ -106,14 +90,6 @@ const PostDetails = () => {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50">
         <p className="text-red-500 text-lg">{error}</p>
-      </div>
-    );
-  }
-
-  if (!post) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
-        <p className="text-gray-600 text-lg">Post not available.</p>
       </div>
     );
   }
@@ -144,10 +120,7 @@ const PostDetails = () => {
       {/* 🔔 Subscribe Button */}
       {user && (
         <div className="mt-4">
-          <SubscribeButton
-            authorId={post.author?._id}
-            category={post.category}
-          />
+          <SubscribeButton authorId={post.author?._id} category={post.category} />
         </div>
       )}
 
@@ -176,4 +149,5 @@ const PostDetails = () => {
 };
 
 export default PostDetails;
+
 

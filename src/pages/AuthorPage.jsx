@@ -16,13 +16,10 @@ export default function AuthorPage() {
         setLoading(true);
         setError("");
 
-        // Fetch author data
-        const { data: authorData } = await API.get(`/users/${authorId}`);
-        setAuthor(authorData);
-
-        // Fetch posts by author
-        const { data: postData } = await API.get(`/posts/author/${authorId}`);
-        setPosts(postData);
+        // Fetch author info and posts in one call
+        const { data } = await API.get(`/users/author/${authorId}`);
+        setAuthor(data.author || {});
+        setPosts(data.posts || []);
       } catch (err) {
         console.error("Error fetching author or posts:", err);
         if (err.response?.status === 404) {
@@ -60,7 +57,7 @@ export default function AuthorPage() {
       {/* Author Info */}
       <div className="mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-4">
         <img
-          src={author.profilePicture || "/default-avatar.png"}
+          src={author.profilePic || "/default-avatar.png"}
           onError={(e) => (e.target.src = "/default-avatar.png")}
           alt={author.name || "Author avatar"}
           className="w-28 h-28 rounded-full object-cover border border-gray-300"
@@ -69,19 +66,21 @@ export default function AuthorPage() {
           <h2 className="text-2xl font-bold">{author.name}</h2>
           <p className="text-gray-600 mt-1">{author.bio || "No bio available."}</p>
 
-          {Array.isArray(author.socialLinks) && author.socialLinks.length > 0 && (
+          {author.socialLinks && Object.keys(author.socialLinks).length > 0 && (
             <div className="mt-3 flex flex-wrap gap-3">
-              {author.socialLinks.map((link, index) => (
-                <a
-                  key={index}
-                  href={link.url || link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline capitalize"
-                >
-                  {link.platform || link.replace(/^https?:\/\//, "")}
-                </a>
-              ))}
+              {Object.entries(author.socialLinks).map(([platform, url]) =>
+                url ? (
+                  <a
+                    key={platform}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline capitalize"
+                  >
+                    {platform}
+                  </a>
+                ) : null
+              )}
             </div>
           )}
         </div>
@@ -106,4 +105,5 @@ export default function AuthorPage() {
     </div>
   );
 }
+
 
