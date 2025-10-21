@@ -4,7 +4,7 @@ import API from "../api/axiosConfig";
 import PostCard from "../components/PostCard";
 
 export default function AuthorPage() {
-  const { authorId } = useParams(); 
+  const { authorId } = useParams();
   const [author, setAuthor] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,10 +16,13 @@ export default function AuthorPage() {
         setLoading(true);
         setError("");
 
-        // Fetch author info and posts in one call
-        const { data } = await API.get(`/users/author/${authorId}`);
-        setAuthor(data.author || {});
-        setPosts(data.posts || []);
+        // Fetch posts by author
+        const { data: postsData } = await API.get(`/posts/author/${authorId}`);
+        setPosts(postsData.posts || []);
+
+        // Fetch author info
+        const { data: authorData } = await API.get(`/users/${authorId}`);
+        setAuthor(authorData || {});
       } catch (err) {
         console.error("Error fetching author or posts:", err);
         if (err.response?.status === 404) {
@@ -105,5 +108,3 @@ export default function AuthorPage() {
     </div>
   );
 }
-
-

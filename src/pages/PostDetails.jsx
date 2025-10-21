@@ -57,6 +57,22 @@ const PostDetails = () => {
     }
   };
 
+  // 👎 Handle Unlike
+  const handleUnlike = async () => {
+    if (!user) {
+      alert("Please login to unlike this post.");
+      return;
+    }
+
+    try {
+      const { data } = await API.delete(`/posts/${post._id}/like`);
+      setLikes(data.likes);
+    } catch (err) {
+      console.error("Error unliking post:", err);
+      alert(err.response?.data?.message || "Failed to unlike post.");
+    }
+  };
+
   // 🔗 Handle Share
   const handleShare = async () => {
     if (!user) {
@@ -69,7 +85,7 @@ const PostDetails = () => {
       setShares(data.shares);
 
       // Copy post URL to clipboard
-      await navigator.clipboard.writeText(`${window.location.origin}/post/${post.slug}`);
+      await navigator.clipboard.writeText(data.shareUrl || `${window.location.origin}/post/${post.slug}`);
       alert("✅ Post link copied to clipboard!");
     } catch (err) {
       console.error("Error sharing post:", err);
@@ -127,10 +143,10 @@ const PostDetails = () => {
       {/* 👍 Like & 🔗 Share */}
       <div className="flex items-center gap-4 mt-6">
         <button
-          onClick={handleLike}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          onClick={likes > 0 ? handleUnlike : handleLike}
+          className={`px-4 py-2 rounded ${likes > 0 ? "bg-gray-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}
         >
-          👍 Like ({likes})
+          👍 {likes > 0 ? "Unlike" : "Like"} ({likes})
         </button>
         <button
           onClick={handleShare}
@@ -149,5 +165,3 @@ const PostDetails = () => {
 };
 
 export default PostDetails;
-
-

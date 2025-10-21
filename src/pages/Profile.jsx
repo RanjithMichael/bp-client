@@ -5,19 +5,20 @@ import { AuthContext } from "../context/AuthContext";
 import PostCard from "../components/PostCard";
 
 const Profile = () => {
-  useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     bio: "",
     profilePic: "",
     social: { website: "", twitter: "", linkedin: "", github: "" },
   });
-  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -62,8 +63,8 @@ const Profile = () => {
     try {
       const { data } = await API.put("/users/profile", formData);
       setProfile(data);
-      setSuccessMsg("Profile updated successfully!");
       setEditing(false);
+      setSuccessMsg("Profile updated successfully!");
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
       console.error("Error updating profile:", err);
@@ -254,4 +255,5 @@ const Profile = () => {
 };
 
 export default Profile;
+
 

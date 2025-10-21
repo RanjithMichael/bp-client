@@ -17,35 +17,57 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-blue-600 text-white p-4 flex flex-col md:flex-row justify-between items-center relative">
-      <div className="flex justify-between w-full md:w-auto items-center">
-        <Link to="/" className="text-xl font-bold">BlogPlatform</Link>
+    <header className="bg-blue-600 text-white p-4 flex flex-col md:flex-row justify-between items-center relative shadow-md">
+      <div className="flex justify-between items-center w-full md:w-auto">
+        <Link to="/" className="text-2xl font-bold">
+          BlogPlatform
+        </Link>
 
         {/* Login warning message */}
         {loginMessage && (
-          <div className="absolute top-full mt-2 right-0 bg-yellow-100 text-yellow-800 p-2 rounded shadow-md text-sm">
+          <div className="absolute top-full mt-2 right-0 bg-yellow-100 text-yellow-800 p-2 rounded shadow-md text-sm z-50">
             {loginMessage}
           </div>
         )}
       </div>
 
-      <nav className="flex gap-4 mt-2 md:mt-0">
-        <Link to="/">Home</Link>
-        <button onClick={handleCreatePostClick} className="hover:underline">
+      <nav className="flex flex-col md:flex-row gap-4 mt-2 md:mt-0 items-center">
+        <Link to="/" className="hover:underline">
+          Home
+        </Link>
+        <button
+          onClick={handleCreatePostClick}
+          className="hover:underline focus:outline-none"
+        >
           Create Post
         </button>
 
         {user ? (
           <>
-            <Link to="/profile">{user.name}</Link>
-            <button onClick={logout} className="bg-red-500 px-2 rounded">
+            <Link
+              to="/profile"
+              className="hover:underline font-medium"
+            >
+              {user.name}
+            </Link>
+            <button
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+              className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+            >
               Logout
             </button>
           </>
         ) : (
           <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
+            <Link to="/login" className="hover:underline">
+              Login
+            </Link>
+            <Link to="/register" className="hover:underline">
+              Register
+            </Link>
           </>
         )}
       </nav>
@@ -54,4 +76,5 @@ const Header = () => {
 };
 
 export default Header;
+
 
