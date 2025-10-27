@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import axios from '../api/axiosConfig';
 import { Bar } from 'react-chartjs-2';

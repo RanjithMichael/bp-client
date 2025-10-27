@@ -1,4 +1,3 @@
-/* src/components/Comment.jsx */
 const Comment = ({ comment }) => {
   return (
     <div className="border rounded-lg p-3 mb-3 bg-gray-50 shadow-sm">

@@ -1,4 +1,3 @@
-// ResetPassword.jsx
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axiosConfig";

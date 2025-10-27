@@ -17,7 +17,7 @@ const CreatePost = () => {
   const [loading, setLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState(""); // message for non-logged-in users
 
-  // ✅ Validation
+  // Validation
   const validate = () => {
     const newErrors = {};
 
@@ -37,7 +37,7 @@ const CreatePost = () => {
     return newErrors;
   };
 
-  // ✅ Handle Submit
+  // Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 

@@ -1,4 +1,3 @@
-// ForgotPassword.jsx
 import { useState } from "react";
 import API from "../api/axiosConfig";
 
