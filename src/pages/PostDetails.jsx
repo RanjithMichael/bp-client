@@ -29,9 +29,9 @@ const PostDetails = () => {
       } catch (err) {
         console.error("Error fetching post:", err);
         if (err.response?.status === 404) {
-          setError("Post not found.");
+          setError("Post not found or may have been removed.");
         } else {
-          setError("Failed to fetch post. Please try again later.");
+          setError("Failed to load the post. Please try again later.");
         }
       } finally {
         setLoading(false);
@@ -41,13 +41,12 @@ const PostDetails = () => {
     if (slug) fetchPost();
   }, [slug]);
 
-  // 👍 Handle Like
+  // Handle Like
   const handleLike = async () => {
     if (!user) {
       alert("Please login to like this post.");
       return;
     }
-
     try {
       const { data } = await API.post(`/posts/${post._id}/like`);
       setLikes(data.likes);
@@ -57,13 +56,12 @@ const PostDetails = () => {
     }
   };
 
-  // 👎 Handle Unlike
+  // Handle Unlike
   const handleUnlike = async () => {
     if (!user) {
       alert("Please login to unlike this post.");
       return;
     }
-
     try {
       const { data } = await API.delete(`/posts/${post._id}/like`);
       setLikes(data.likes);
@@ -73,20 +71,15 @@ const PostDetails = () => {
     }
   };
 
-  // 🔗 Handle Share
+  // Handle Share
   const handleShare = async () => {
-    if (!user) {
-      alert("Please login to share this post.");
-      return;
-    }
-
     try {
       const { data } = await API.post(`/posts/${post._id}/share`);
       setShares(data.shares);
 
-      // Copy post URL to clipboard
-      await navigator.clipboard.writeText(data.shareUrl || `${window.location.origin}/post/${post.slug}`);
-      alert("✅ Post link copied to clipboard!");
+      const shareUrl = `${window.location.origin}/posts/${post.slug}`;
+      await navigator.clipboard.writeText(shareUrl);
+      alert("✅ Post link copied! You can share it anywhere.");
     } catch (err) {
       console.error("Error sharing post:", err);
       alert(err.response?.data?.message || "Failed to share post.");
@@ -112,15 +105,27 @@ const PostDetails = () => {
 
   return (
     <div className="max-w-3xl mx-auto mt-6 px-4 pb-10">
+      {/* 🖼️ Post Image */}
+      {post.image && (
+        <div className="mb-6">
+          <img
+            src={post.image.startsWith("http") ? post.image : `${import.meta.env.VITE_API_URL}/${post.image}`}
+            alt={post.title}
+            className="w-full h-64 object-cover rounded-lg shadow-md"
+            onError={(e) => (e.target.style.display = "none")}
+          />
+        </div>
+      )}
+
       {/* 📝 Title */}
-      <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
+      <h1 className="text-3xl font-bold mb-4 text-gray-900">{post.title}</h1>
 
       {/* 👤 Author & Date */}
       <p className="text-gray-600 mb-4">
         By{" "}
         <Link
           to={`/author/${post.author?._id}`}
-          className="text-blue-500 hover:underline"
+          className="text-blue-600 hover:underline font-medium"
         >
           {post.author?.name || "Unknown Author"}
         </Link>{" "}
@@ -129,28 +134,32 @@ const PostDetails = () => {
 
       {/* 📄 Content */}
       <div
-        className="prose max-w-none"
+        className="prose max-w-none text-gray-800"
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
 
-      {/* 🔔 Subscribe Button */}
+      {/* 🔔 Subscribe */}
       {user && (
         <div className="mt-4">
           <SubscribeButton authorId={post.author?._id} category={post.category} />
         </div>
       )}
 
-      {/* 👍 Like & 🔗 Share */}
+      {/* ❤️ Like & 🔗 Share */}
       <div className="flex items-center gap-4 mt-6">
         <button
           onClick={likes > 0 ? handleUnlike : handleLike}
-          className={`px-4 py-2 rounded ${likes > 0 ? "bg-gray-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+          className={`px-4 py-2 rounded transition ${
+            likes > 0
+              ? "bg-gray-500 text-white hover:bg-gray-600"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
         >
           👍 {likes > 0 ? "Unlike" : "Like"} ({likes})
         </button>
         <button
           onClick={handleShare}
-          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
         >
           🔗 Share ({shares})
         </button>
@@ -165,3 +174,4 @@ const PostDetails = () => {
 };
 
 export default PostDetails;
+

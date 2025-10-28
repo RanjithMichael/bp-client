@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import ProtectedRoute from "./components/ProtectedRoute"; // 
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
 import Home from "./pages/Home";
@@ -30,7 +30,7 @@ function App() {
           {/* Main Content */}
           <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <Routes>
-              {/* Public Routes */}
+              {/* ---------- Public Routes ---------- */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -38,7 +38,14 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-              {/* Protected / Auth Routes */}
+              {/* ---------- Post Routes ---------- */}
+              {/* Changed from /posts/:slug → /post/:slug to match backend route */}
+              <Route path="/post/:slug" element={<PostDetails />} />
+
+              {/* Author page route for shared author URLs */}
+              <Route path="/author/:id" element={<AuthorPage />} />
+
+              {/* ---------- Protected Routes ---------- */}
               <Route
                 path="/create-post"
                 element={
@@ -64,13 +71,7 @@ function App() {
                 }
               />
 
-              {/* Posts */}
-              <Route path="/posts/:slug" element={<PostDetails />} />
-
-              {/* Author Pages */}
-              <Route path="/author/:authorId" element={<AuthorPage />} />
-
-              {/* 404 Page */}
+              {/* ---------- 404 Fallback ---------- */}
               <Route
                 path="*"
                 element={
@@ -91,23 +92,4 @@ function App() {
     </AuthProvider>
   );
 }
-
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
