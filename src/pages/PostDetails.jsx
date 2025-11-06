@@ -71,14 +71,15 @@ const PostDetails = () => {
     }
   };
 
-  // Handle Share
+  // Handle Share (copy link)
   const handleShare = async () => {
     try {
+      const shareUrl = `${window.location.origin}/post/${post.slug}`;
+      await navigator.clipboard.writeText(shareUrl);
+
       const { data } = await API.post(`/posts/${post._id}/share`);
       setShares(data.shares);
 
-      const shareUrl = `${window.location.origin}/posts/${post.slug}`;
-      await navigator.clipboard.writeText(shareUrl);
       alert("✅ Post link copied! You can share it anywhere.");
     } catch (err) {
       console.error("Error sharing post:", err);
@@ -86,6 +87,7 @@ const PostDetails = () => {
     }
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
@@ -95,6 +97,7 @@ const PostDetails = () => {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50">
@@ -103,19 +106,24 @@ const PostDetails = () => {
     );
   }
 
+  // Fallback-safe image URL
+  const imageUrl = post.image
+    ? post.image.startsWith("http")
+      ? post.image
+      : `https://bp-server-4.onrender.com/${post.image.replace(/\\/g, "/")}`
+    : "/default-post.png";
+
   return (
     <div className="max-w-3xl mx-auto mt-6 px-4 pb-10">
       {/* 🖼️ Post Image */}
-      {post.image && (
-        <div className="mb-6">
-          <img
-            src={post.image.startsWith("http") ? post.image : `${import.meta.env.VITE_API_URL}/${post.image}`}
-            alt={post.title}
-            className="w-full h-64 object-cover rounded-lg shadow-md"
-            onError={(e) => (e.target.style.display = "none")}
-          />
-        </div>
-      )}
+      <div className="mb-6">
+        <img
+          src={imageUrl}
+          alt={post.title}
+          className="w-full h-64 object-cover rounded-lg shadow-md"
+          onError={(e) => (e.target.src = "/default-post.png")}
+        />
+      </div>
 
       {/* 📝 Title */}
       <h1 className="text-3xl font-bold mb-4 text-gray-900">{post.title}</h1>
@@ -124,7 +132,7 @@ const PostDetails = () => {
       <p className="text-gray-600 mb-4">
         By{" "}
         <Link
-          to={`/author/${post.author?._id}`}
+          to={`/author/${post.author?.username || post.author?._id}`}
           className="text-blue-600 hover:underline font-medium"
         >
           {post.author?.name || "Unknown Author"}
@@ -138,10 +146,13 @@ const PostDetails = () => {
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
 
-      {/* 🔔 Subscribe */}
+      {/* 🔔 Subscribe Button */}
       {user && (
         <div className="mt-4">
-          <SubscribeButton authorId={post.author?._id} category={post.category} />
+          <SubscribeButton
+            authorId={post.author?._id}
+            category={post.category}
+          />
         </div>
       )}
 
@@ -174,4 +185,5 @@ const PostDetails = () => {
 };
 
 export default PostDetails;
+
 
