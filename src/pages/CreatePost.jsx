@@ -42,7 +42,7 @@ const CreatePost = () => {
     e.preventDefault();
 
     if (!user) {
-      setLoginMessage("⚠️ You must be logged in to create a post.");
+      setLoginMessage("⚠️ You must Register to create a post.");
       return;
     }
 
