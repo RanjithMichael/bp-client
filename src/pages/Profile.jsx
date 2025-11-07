@@ -20,6 +20,13 @@ const Profile = () => {
     social: { website: "", twitter: "", linkedin: "", github: "" },
   });
 
+  // Redirect to /register if not logged in
+  useEffect(() => {
+    if (!user) {
+      navigate("/register");
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -30,14 +37,20 @@ const Profile = () => {
           name: data.name || "",
           bio: data.bio || "",
           profilePic: data.profilePic || "",
-          social: data.social || { website: "", twitter: "", linkedin: "", github: "" },
+          social: data.social || {
+            website: "",
+            twitter: "",
+            linkedin: "",
+            github: "",
+          },
         });
       } catch (err) {
         console.error("Error fetching profile:", err);
         if (err.response?.status === 401) {
+          
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          navigate("/login");
+          navigate("/register");
         } else {
           setError("Failed to load profile.");
         }
@@ -52,7 +65,10 @@ const Profile = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (["website", "twitter", "linkedin", "github"].includes(name)) {
-      setFormData((prev) => ({ ...prev, social: { ...prev.social, [name]: value } }));
+      setFormData((prev) => ({
+        ...prev,
+        social: { ...prev.social, [name]: value },
+      }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -123,40 +139,22 @@ const Profile = () => {
                 placeholder="Profile Picture URL"
                 className="w-full border p-2 rounded"
               />
+
+              {/* Social Links */}
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  name="website"
-                  value={formData.social.website}
-                  onChange={handleChange}
-                  placeholder="Website"
-                  className="w-full border p-2 rounded"
-                />
-                <input
-                  type="text"
-                  name="twitter"
-                  value={formData.social.twitter}
-                  onChange={handleChange}
-                  placeholder="Twitter"
-                  className="w-full border p-2 rounded"
-                />
-                <input
-                  type="text"
-                  name="linkedin"
-                  value={formData.social.linkedin}
-                  onChange={handleChange}
-                  placeholder="LinkedIn"
-                  className="w-full border p-2 rounded"
-                />
-                <input
-                  type="text"
-                  name="github"
-                  value={formData.social.github}
-                  onChange={handleChange}
-                  placeholder="GitHub"
-                  className="w-full border p-2 rounded"
-                />
+                {["website", "twitter", "linkedin", "github"].map((field) => (
+                  <input
+                    key={field}
+                    type="text"
+                    name={field}
+                    value={formData.social[field]}
+                    onChange={handleChange}
+                    placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                    className="w-full border p-2 rounded"
+                  />
+                ))}
               </div>
+
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -176,7 +174,9 @@ const Profile = () => {
             </form>
           ) : (
             <>
-              {profile.bio && <p className="text-gray-700 mt-2">Bio: {profile.bio}</p>}
+              {profile.bio && (
+                <p className="text-gray-700 mt-2">Bio: {profile.bio}</p>
+              )}
               {profile.profilePic && (
                 <img
                   src={profile.profilePic}
@@ -186,25 +186,19 @@ const Profile = () => {
               )}
               {profile.social && (
                 <div className="flex gap-4 mt-2">
-                  {profile.social.website && (
-                    <a href={profile.social.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                      Website
-                    </a>
-                  )}
-                  {profile.social.twitter && (
-                    <a href={profile.social.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                      Twitter
-                    </a>
-                  )}
-                  {profile.social.linkedin && (
-                    <a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                      LinkedIn
-                    </a>
-                  )}
-                  {profile.social.github && (
-                    <a href={profile.social.github} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                      GitHub
-                    </a>
+                  {Object.entries(profile.social).map(
+                    ([key, value]) =>
+                      value && (
+                        <a
+                          key={key}
+                          href={value}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          {key.charAt(0).toUpperCase() + key.slice(1)}
+                        </a>
+                      )
                   )}
                 </div>
               )}
@@ -255,5 +249,6 @@ const Profile = () => {
 };
 
 export default Profile;
+
 
 

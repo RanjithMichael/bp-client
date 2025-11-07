@@ -11,8 +11,8 @@ const Header = () => {
     if (user) {
       navigate("/create-post");
     } else {
-      setLoginMessage("⚠️ You must log in to create a post.");
-      setTimeout(() => setLoginMessage(""), 3000); // hide after 3 seconds
+      setLoginMessage("⚠️ You must register or log in to create a post.");
+      setTimeout(() => setLoginMessage(""), 3000); // Hide after 3 seconds
     }
   };
 
@@ -35,6 +35,7 @@ const Header = () => {
         <Link to="/" className="hover:underline">
           Home
         </Link>
+
         <button
           onClick={handleCreatePostClick}
           className="hover:underline focus:outline-none"
@@ -44,16 +45,13 @@ const Header = () => {
 
         {user ? (
           <>
-            <Link
-              to="/profile"
-              className="hover:underline font-medium"
-            >
+            <Link to="/profile" className="hover:underline font-medium">
               {user.name}
             </Link>
             <button
               onClick={() => {
                 logout();
-                navigate("/login");
+                navigate("/");
               }}
               className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
             >
@@ -62,10 +60,11 @@ const Header = () => {
           </>
         ) : (
           <>
-            <Link to="/login" className="hover:underline">
-              Login
-            </Link>
-            <Link to="/register" className="hover:underline">
+            {/* Only Register visible when not logged in */}
+            <Link
+              to="/register"
+              className="bg-green-500 px-3 py-1 rounded hover:bg-green-600 text-white font-medium transition"
+            >
               Register
             </Link>
           </>
@@ -76,5 +75,6 @@ const Header = () => {
 };
 
 export default Header;
+
 
 

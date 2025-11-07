@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { User, Calendar, ThumbsUp, Share2 } from "lucide-react";
+import { User, Calendar, ThumbsUp } from "lucide-react";
 import { useState } from "react";
 
 const PostCard = ({ post }) => {
@@ -21,20 +21,30 @@ const PostCard = ({ post }) => {
       })
     : "Unknown Date";
 
-  // Resolve proper image path
+  // Fix image path (for Render or backend servers)
   const imageUrl = !imageError
     ? post?.image?.startsWith("http")
       ? post.image
-      : `https://bp-server-4.onrender.com/${post.image?.replace(/\\/g, "/")}`
+      : `https://bp-server-4.onrender.com/uploads/${post.image
+          ?.replace(/\\/g, "/")
+          ?.replace(/^uploads\//, "")}`
     : "/default-post.png";
 
-  // Share function (copies link)
-  const handleShare = (e) => {
-    e.preventDefault();
+  // Real social media share handler
+  const handleShare = (platform) => {
     const postSlug = post?.slug || post?._id;
     const postUrl = `${window.location.origin}/post/${postSlug}`;
-    navigator.clipboard.writeText(postUrl);
-    alert("📋 Post link copied! You can share it now.");
+    const title = encodeURIComponent(post.title);
+
+    const shareUrls = {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${postUrl}`,
+      twitter: `https://twitter.com/intent/tweet?url=${postUrl}&text=${title}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${postUrl}`,
+      whatsapp: `https://api.whatsapp.com/send?text=${title}%20${postUrl}`,
+      email: `mailto:?subject=${title}&body=Check%20this%20out:%20${postUrl}`,
+    };
+
+    window.open(shareUrls[platform], "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -82,17 +92,46 @@ const PostCard = ({ post }) => {
               <Calendar className="w-4 h-4" /> {date}
             </span>
 
+            {/* Likes + Shares */}
             <div className="flex items-center gap-3 mt-1">
               <span className="flex items-center gap-1">
                 <ThumbsUp className="w-4 h-4 text-blue-500" />{" "}
                 {post.analytics?.likes || 0}
               </span>
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-1 text-purple-500 hover:text-purple-600 transition"
-              >
-                <Share2 className="w-4 h-4" /> {post.analytics?.shares || 0}
-              </button>
+
+              {/* Real social sharing buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleShare("facebook")}
+                  title="Share on Facebook"
+                >
+                  <i className="fab fa-facebook text-blue-600 hover:text-blue-700"></i>
+                </button>
+                <button
+                  onClick={() => handleShare("twitter")}
+                  title="Share on Twitter"
+                >
+                  <i className="fab fa-twitter text-sky-500 hover:text-sky-600"></i>
+                </button>
+                <button
+                  onClick={() => handleShare("linkedin")}
+                  title="Share on LinkedIn"
+                >
+                  <i className="fab fa-linkedin text-blue-700 hover:text-blue-800"></i>
+                </button>
+                <button
+                  onClick={() => handleShare("whatsapp")}
+                  title="Share on WhatsApp"
+                >
+                  <i className="fab fa-whatsapp text-green-500 hover:text-green-600"></i>
+                </button>
+                <button
+                  onClick={() => handleShare("email")}
+                  title="Share via Email"
+                >
+                  <i className="fas fa-envelope text-gray-600 hover:text-gray-800"></i>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -109,4 +148,3 @@ const PostCard = ({ post }) => {
 };
 
 export default PostCard;
-
