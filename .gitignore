@@ -7,18 +7,40 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Node Modules
+node_modules/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Build / Distribution
+dist/
+dist-ssr/
+build/            # React frontend build
+coverage/         # Jest or test coverage reports
+
+# Environment / Local config
+.env
+*.local
+.env.*             # For multiple env files like .env.development
+*.env.local        # React env
+*.env.development
+*.env.production
+
+# OS / Editor / IDE files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+.vscode/
+!.vscode/extensions.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.swp
+*.swo
+
+# Optional: Misc
+
+*.cache
+*.tmp
+
