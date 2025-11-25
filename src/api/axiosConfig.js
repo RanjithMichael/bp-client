@@ -9,10 +9,13 @@ const API = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000, // ⏱️ prevent hanging requests
+  timeout: 15000, // prevent hanging requests
 });
 
-// Request Interceptor → Attach token automatically
+// ------------------------
+// REQUEST INTERCEPTOR
+// (Attach JWT token automatically)
+// ------------------------
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -24,7 +27,10 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor → Handle global errors & token expiry
+// ------------------------
+// RESPONSE INTERCEPTOR
+// (Handle token expiry, auto-retry, errors)
+// ------------------------
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -32,9 +38,10 @@ API.interceptors.response.use(
 
     // Handle 401 Unauthorized → redirect to login
     if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
       if (window.location.pathname !== "/login") {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
         window.location.href = "/login";
       }
     }
@@ -49,39 +56,29 @@ API.interceptors.response.use(
       return API(originalRequest);
     }
 
-    // Optional: Centralized error logging
+    // Optional centralized error logging
     console.error("API Error:", {
       url: originalRequest?.url,
-      message: error.message,
       status: error.response?.status,
+      message: error.message,
     });
 
     return Promise.reject(error);
   }
 );
 
+// ------------------------
 // Helper for paginated GET requests
+// ------------------------
 export const getPaginated = async (url, page = 1, limit = 10, search = "") => {
   const params = new URLSearchParams({
     page,
     limit,
     ...(search && { search }),
   });
+
   const { data } = await API.get(`${url}?${params.toString()}`);
   return data;
 };
 
 export default API;
-
-
-
-
-
-
-
-
-
-
-
-
-
