@@ -12,10 +12,9 @@ const API = axios.create({
   timeout: 15000, // prevent hanging requests
 });
 
-// ------------------------
-// REQUEST INTERCEPTOR
-// (Attach JWT token automatically)
-// ------------------------
+
+// REQUEST INTERCEPTOR (Attach JWT token automatically)
+
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -26,11 +25,9 @@ API.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
-// ------------------------
 // RESPONSE INTERCEPTOR
 // (Handle token expiry, auto-retry, errors)
-// ------------------------
+
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -66,10 +63,7 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// ------------------------
 // Helper for paginated GET requests
-// ------------------------
 export const getPaginated = async (url, page = 1, limit = 10, search = "") => {
   const params = new URLSearchParams({
     page,
@@ -80,5 +74,4 @@ export const getPaginated = async (url, page = 1, limit = 10, search = "") => {
   const { data } = await API.get(`${url}?${params.toString()}`);
   return data;
 };
-
 export default API;
