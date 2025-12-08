@@ -1,36 +1,65 @@
-
 import { useState, useEffect } from "react";
 import PostCard from "../components/PostCard";
-import API from "../api/axiosConfig";
+import { getPaginated } from "../api/axiosConfig";
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const res = await API.get(`/posts?search=${search}`);
-        setPosts(res.data);
-        setError(null);
-      } catch (err) {
-        console.error("❌ Error fetching posts:", err);
-        setError("Failed to fetch posts. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [page, setPage] = useState(1);
+  const limit = 6; // posts per page
 
-    // Debounce the search input by 500ms
+// Main fetch function
+  
+  const fetchPosts = async (reset = false) => {
+    try {
+      if (reset) setLoading(true);
+
+      const data = await getPaginated("/posts", page, limit, search);
+
+      if (reset) {
+        setPosts(data.posts || []);
+      } else {
+        setPosts((prev) => [...prev, ...(data.posts || [])]);
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error("❌ Error fetching posts:", err);
+      setError("Failed to fetch posts. Please try again later.");
+    } finally {
+      reset ? setLoading(false) : setLoadingMore(false);
+    }
+  };
+
+  // Search Effect (debounced)
+  
+  useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchPosts();
+      setPage(1);
+      fetchPosts(true);
     }, 500);
 
-    return () => clearTimeout(delayDebounceFn); // Cleanup if input changes
+    return () => clearTimeout(delayDebounceFn);
   }, [search]);
+
+  // Fetch when page changes
+  
+  useEffect(() => {
+    if (page > 1) {
+      setLoadingMore(true);
+      fetchPosts(false);
+    }
+  }, [page]);
+
+  // Initial Load
+  
+  useEffect(() => {
+    fetchPosts(true);
+  }, []);
 
   if (loading) {
     return (
@@ -59,12 +88,11 @@ const Home = () => {
         relative
       "
     >
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60"></div>
 
-      {/* Main Content */}
       <div className="relative z-10 container mx-auto px-4 py-10">
-        {/* Top Bar */}
+        
+        {/* Search Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <input
             type="text"
@@ -75,14 +103,37 @@ const Home = () => {
           />
         </div>
 
-        {/* Posts Grid */}
+        {/* Posts */}
         {posts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => (
-              // Pass the slug instead of _id
-              <PostCard key={post._id} post={post} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {posts.map((post) => (
+                <PostCard key={post._id} post={post} />
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            <div className="flex justify-center mt-10">
+              {loadingMore ? (
+                <button
+                  disabled
+                  className="px-6 py-3 bg-blue-500 text-white rounded-lg opacity-70"
+                >
+                  Loading...
+                </button>
+              ) : (
+                <button
+                  onClick={() => setPage((prev) => prev + 1)}
+                  className="
+                    px-6 py-3 bg-blue-600 text-white rounded-lg 
+                    hover:bg-blue-700 transition shadow-md
+                  "
+                >
+                  Load More
+                </button>
+              )}
+            </div>
+          </>
         ) : (
           <p className="text-center text-gray-200 mt-16 text-xl">
             No posts found.
@@ -94,3 +145,4 @@ const Home = () => {
 };
 
 export default Home;
+
