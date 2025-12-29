@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { User, Calendar, ThumbsUp } from "lucide-react";
+import { FaUser, FaCalendarAlt, FaThumbsUp, FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import { useState } from "react";
 
 const PostCard = ({ post }) => {
@@ -34,14 +34,14 @@ const PostCard = ({ post }) => {
   const handleShare = (platform) => {
     const postSlug = post?.slug || post?._id;
     const postUrl = `${window.location.origin}/post/${postSlug}`;
-    const title = encodeURIComponent(post.title);
+    const encodedTitle = encodeURIComponent(post.title);
 
     const shareUrls = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${postUrl}`,
-      twitter: `https://twitter.com/intent/tweet?url=${postUrl}&text=${title}`,
+      twitter: `https://twitter.com/intent/tweet?url=${postUrl}&text=${encodedTitle}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${postUrl}`,
-      whatsapp: `https://api.whatsapp.com/send?text=${title}%20${postUrl}`,
-      email: `mailto:?subject=${title}&body=Check%20this%20out:%20${postUrl}`,
+      whatsapp: `https://api.whatsapp.com/send?text=${encodedTitle}%20${postUrl}`,
+      email: `mailto:?subject=${encodedTitle}&body=Check this out: ${postUrl}`,
     };
 
     window.open(shareUrls[platform], "_blank", "noopener,noreferrer");
@@ -73,9 +73,9 @@ const PostCard = ({ post }) => {
 
         {/* Author + Date + Engagement */}
         <div className="flex justify-between items-end mt-auto">
-          <div className="flex flex-col gap-1 text-xs text-gray-500">
+          <div className="flex flex-col gap-2 text-xs text-gray-500">
             <span className="flex items-center gap-1">
-              <User className="w-4 h-4" />{" "}
+              <FaUser className="w-4 h-4" />
               {username ? (
                 <Link
                   to={`/author/${username}`}
@@ -89,47 +89,31 @@ const PostCard = ({ post }) => {
             </span>
 
             <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" /> {date}
+              <FaCalendarAlt className="w-4 h-4" /> {date}
             </span>
 
             {/* Likes + Shares */}
             <div className="flex items-center gap-3 mt-1">
               <span className="flex items-center gap-1">
-                <ThumbsUp className="w-4 h-4 text-blue-500" />{" "}
-                {post.analytics?.likes || 0}
+                <FaThumbsUp className="w-4 h-4 text-blue-500" /> {post.analytics?.likes || 0}
               </span>
 
-              {/* Real social sharing buttons */}
+              {/* Social sharing buttons */}
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleShare("facebook")}
-                  title="Share on Facebook"
-                >
-                  <i className="fab fa-facebook text-blue-600 hover:text-blue-700"></i>
+                <button onClick={() => handleShare("facebook")} title="Share on Facebook">
+                  <FaFacebook className="w-4 h-4 text-blue-600 hover:text-blue-700" />
                 </button>
-                <button
-                  onClick={() => handleShare("twitter")}
-                  title="Share on Twitter"
-                >
-                  <i className="fab fa-twitter text-sky-500 hover:text-sky-600"></i>
+                <button onClick={() => handleShare("twitter")} title="Share on Twitter">
+                  <FaTwitter className="w-4 h-4 text-sky-500 hover:text-sky-600" />
                 </button>
-                <button
-                  onClick={() => handleShare("linkedin")}
-                  title="Share on LinkedIn"
-                >
-                  <i className="fab fa-linkedin text-blue-700 hover:text-blue-800"></i>
+                <button onClick={() => handleShare("linkedin")} title="Share on LinkedIn">
+                  <FaLinkedin className="w-4 h-4 text-blue-700 hover:text-blue-800" />
                 </button>
-                <button
-                  onClick={() => handleShare("whatsapp")}
-                  title="Share on WhatsApp"
-                >
-                  <i className="fab fa-whatsapp text-green-500 hover:text-green-600"></i>
+                <button onClick={() => handleShare("whatsapp")} title="Share on WhatsApp">
+                  <FaWhatsapp className="w-4 h-4 text-green-500 hover:text-green-600" />
                 </button>
-                <button
-                  onClick={() => handleShare("email")}
-                  title="Share via Email"
-                >
-                  <i className="fas fa-envelope text-gray-600 hover:text-gray-800"></i>
+                <button onClick={() => handleShare("email")} title="Share via Email">
+                  <FaEnvelope className="w-4 h-4 text-gray-600 hover:text-gray-800" />
                 </button>
               </div>
             </div>
