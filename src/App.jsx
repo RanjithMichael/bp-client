@@ -4,6 +4,10 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// ✅ Toastify imports
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 // Pages
 import Home from "./pages/Home";
 import Register from "./pages/Register";
@@ -39,10 +43,9 @@ function App() {
               <Route path="/reset-password/:token" element={<ResetPassword />} />
 
               {/* ---------- Post Routes ---------- */}
-              {/* Changed from /posts/:slug → /post/:slug to match backend route */}
               <Route path="/post/:slug" element={<PostDetails />} />
 
-              {/* Author page route for shared author URLs */}
+              {/* Author page route */}
               <Route path="/author/:id" element={<AuthorPage />} />
 
               {/* ---------- Protected Routes ---------- */}
@@ -87,9 +90,24 @@ function App() {
           <footer className="mt-auto bg-white shadow-inner">
             <Footer />
           </footer>
+
+          {/* ✅ Toast container (global notifications) */}
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
         </div>
       </Router>
     </AuthProvider>
   );
 }
+
 export default App;

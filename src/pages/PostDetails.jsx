@@ -5,6 +5,9 @@ import { AuthContext } from "../context/AuthContext";
 import SubscribeButton from "../components/SubscribeButton";
 import AnalyticsChart from "../components/AnalyticsChart";
 
+// ✅ Toastify
+import { toast } from "react-toastify";
+
 const PostDetails = () => {
   const { slug } = useParams();
   const { user } = useContext(AuthContext);
@@ -13,6 +16,7 @@ const PostDetails = () => {
   const [likes, setLikes] = useState(0);
   const [shares, setShares] = useState(0);
   const [likedByUser, setLikedByUser] = useState(false);
+  const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -24,11 +28,22 @@ const PostDetails = () => {
         setError(null);
 
         const { data } = await API.get(`/posts/slug/${slug}`);
-        setPost(data);
-        setLikes(data.analytics?.likes || 0);
-        setShares(data.analytics?.shares || 0);
-        // Check if current user has liked this post
-        setLikedByUser(data.likedByCurrentUser || false);
+        const fetchedPost = data.post;
+        setPost(fetchedPost);
+
+        setLikes(fetchedPost.analytics?.likes?.length || 0);
+        setShares(fetchedPost.analytics?.shares || 0);
+
+        if (user) {
+          const userId = user._id;
+          setLikedByUser(
+            fetchedPost.analytics?.likes?.some((id) => id.toString() === userId) || false
+          );
+        }
+
+        // ✅ Fetch comments
+        const commentsRes = await API.get(`/comments/${fetchedPost._id}`);
+        setComments(commentsRes.data.comments || []);
       } catch (err) {
         console.error("Error fetching post:", err);
         setError(
@@ -42,24 +57,22 @@ const PostDetails = () => {
     };
 
     if (slug) fetchPost();
-  }, [slug]);
+  }, [slug, user]);
 
   // Toggle Like/Unlike
   const toggleLike = async () => {
-    if (!user) return alert("Please login to like this post.");
+    if (!user) {
+      toast.info("Please login to like this post.");
+      return;
+    }
     try {
-      let data;
-      if (likedByUser) {
-        ({ data } = await API.delete(`/posts/${post._id}/like`));
-      } else {
-        ({ data } = await API.post(`/posts/${post._id}/like`));
-      }
-
-      setLikes(data.likes);
-      setLikedByUser(!likedByUser);
+      const { data } = await API.put(`/posts/${post._id}/like`);
+      setLikes(data.analytics.likes);
+      setLikedByUser(data.liked);
+      toast.success(data.liked ? "👍 Post liked!" : "👎 Like removed.");
     } catch (err) {
       console.error("Error updating like:", err);
-      alert(err.response?.data?.message || "Failed to update like.");
+      toast.error(err.response?.data?.message || "Failed to update like.");
     }
   };
 
@@ -68,12 +81,40 @@ const PostDetails = () => {
     try {
       const shareUrl = `${window.location.origin}/post/${post.slug}`;
       await navigator.clipboard.writeText(shareUrl);
-      const { data } = await API.post(`/posts/${post._id}/share`);
-      setShares(data.shares);
-      alert("✅ Post link copied!");
+      setShares((prev) => prev + 1);
+      toast.info("🔗 Post link copied to clipboard!");
     } catch (err) {
       console.error("Error sharing post:", err);
-      alert(err.response?.data?.message || "Failed to share post.");
+      toast.error("Failed to share post.");
+    }
+  };
+
+  // Add comment
+  const addComment = async (e) => {
+    e.preventDefault();
+    const text = e.target.comment.value;
+    if (!text.trim()) return;
+
+    try {
+      const { data } = await API.post(`/comments/${post._id}`, { text });
+      setComments([data.comment, ...comments]); // prepend new comment
+      e.target.reset();
+      toast.success("💬 Comment added!");
+    } catch (err) {
+      console.error("Error adding comment:", err);
+      toast.error(err.response?.data?.message || "Failed to add comment.");
+    }
+  };
+
+  // Delete comment (soft delete)
+  const deleteComment = async (id) => {
+    try {
+      await API.delete(`/comments/${id}`);
+      setComments(comments.filter((c) => c._id !== id));
+      toast.success("🗑️ Comment deleted.");
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+      toast.error(err.response?.data?.message || "Failed to delete comment.");
     }
   };
 
@@ -117,7 +158,7 @@ const PostDetails = () => {
       <p className="text-gray-600 mb-4">
         By{" "}
         <Link
-          to={`/author/${post?.author?.username || post?.author?._id}`}
+          to={`/author/${post?.author?._id}`}
           className="text-blue-600 hover:underline font-medium"
         >
           {post?.author?.name || "Unknown Author"}
@@ -162,12 +203,48 @@ const PostDetails = () => {
       <div className="mt-8">
         <AnalyticsChart postId={post?._id} />
       </div>
+
+      {/* Comments Section */}
+      <div className="mt-10">
+        <h2 className="text-xl font-semibold mb-4">Comments</h2>
+        {user ? (
+          <form onSubmit={addComment} className="flex gap-2 mb-6">
+            <input
+              name="comment"
+              type="text"
+              placeholder="Write a comment..."
+              className="flex-grow border rounded px-3 py-2"
+            />
+            <button className="bg-blue-600 text-white px-4 py-2 rounded">
+              Post
+            </button>
+          </form>
+        ) : (
+          <p className="text-gray-600">Login to add a comment.</p>
+        )}
+
+        <ul className="space-y-4">
+          {comments.filter((c) => !c.isDeleted).map((c) => (
+            <li key={c._id} className="border-b pb-2">
+              <p className="text-gray-800">{c.text}</p>
+              <span className="text-sm text-gray-500">
+                by {c.user?.name || "Unknown"} •{" "}
+                {new Date(c.createdAt).toLocaleDateString()}
+              </span>
+              {user && (user._id === c.user?._id || user.isAdmin) && (
+                <button
+                  onClick={() => deleteComment(c._id)}
+                  className="ml-4 text-red-500 hover:underline text-sm"
+                >
+                  Delete
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
 
 export default PostDetails;
-
-
-
-
