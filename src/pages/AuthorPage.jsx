@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import API from "../api/axiosConfig";
 import PostCard from "../components/PostCard";
+import SubscribeButton from "../components/SubscribeButton"; // ✅ import subscribe button
 
 export default function AuthorPage() {
   const { authorId } = useParams();
@@ -83,7 +84,7 @@ export default function AuthorPage() {
           className="w-28 h-28 rounded-full object-cover border border-gray-300 shadow-sm"
         />
 
-        <div className="text-center sm:text-left">
+        <div className="flex-1 text-center sm:text-left">
           <h2 className="text-2xl font-bold text-gray-900">{author.name}</h2>
           <p className="text-gray-600 mt-2">
             {author.bio || "This author hasn’t added a bio yet."}
@@ -107,6 +108,11 @@ export default function AuthorPage() {
               )}
             </div>
           )}
+
+          {/* ✅ Subscribe Button */}
+          <div className="mt-4">
+            <SubscribeButton authorId={authorId} />
+          </div>
         </div>
       </div>
 
@@ -129,6 +135,3 @@ export default function AuthorPage() {
     </div>
   );
 }
-
-
-

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import API from "../api/axiosConfig"; // use your configured axios instance
+import API from "../api/axiosConfig"; // your configured axios instance
 
-export default function Subscription({ authorId }) {
+export default function SubscribeButton({ authorId }) {
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Fetch subscription status
+  // Fetch subscription status when component mounts
   useEffect(() => {
     const fetchStatus = async () => {
       try {
@@ -22,12 +22,18 @@ export default function Subscription({ authorId }) {
   const toggleSubscription = async () => {
     try {
       setLoading(true);
+      let res;
       if (subscribed) {
-        await API.delete(`/subscriptions/${authorId}`);
+        res = await API.delete(`/subscriptions/${authorId}`);
       } else {
-        await API.post(`/subscriptions/${authorId}`);
+        res = await API.post(`/subscriptions/${authorId}`);
       }
-      setSubscribed(!subscribed);
+      // ✅ update state based on backend response
+      if (res.data.subscribed !== undefined) {
+        setSubscribed(res.data.subscribed);
+      } else {
+        setSubscribed(!subscribed);
+      }
     } catch (err) {
       console.error("Error toggling subscription:", err);
     } finally {

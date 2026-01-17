@@ -1,16 +1,30 @@
 import { Link } from "react-router-dom";
-import { FaUser, FaCalendarAlt, FaThumbsUp, FaFacebook, FaTwitter, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa";
+import {
+  FaUser,
+  FaCalendarAlt,
+  FaThumbsUp,
+  FaFacebook,
+  FaTwitter,
+  FaLinkedin,
+  FaWhatsapp,
+  FaEnvelope,
+} from "react-icons/fa";
 import { useState } from "react";
+import API from "../api/axiosConfig"; // ✅ ensure you have axios instance with token
+
+// Utility to strip HTML tags for safe snippet
+const stripHtml = (html) => html.replace(/<[^>]+>/g, "");
 
 const PostCard = ({ post }) => {
   const [imageError, setImageError] = useState(false);
+  const [likes, setLikes] = useState(post.analytics?.likes ?? 0); // ✅ track likes count
+  const [liked, setLiked] = useState(false); // ✅ track if user liked
 
   // Fallbacks and formatting
   const title = post?.title || "Untitled Post";
-  const content =
-    post?.content?.length > 120
-      ? post.content.substring(0, 120) + "..."
-      : post?.content || "No description available.";
+  const content = post?.content
+    ? stripHtml(post.content).substring(0, 120) + "..."
+    : "No description available.";
   const author = post?.author?.name || "Unknown Author";
   const username = post?.author?.username || "";
   const date = post?.createdAt
@@ -21,7 +35,7 @@ const PostCard = ({ post }) => {
       })
     : "Unknown Date";
 
-  // Fix image path (for Render or backend servers)
+  // Fix image path
   const imageUrl = !imageError
     ? post?.image?.startsWith("http")
       ? post.image
@@ -30,9 +44,9 @@ const PostCard = ({ post }) => {
           ?.replace(/^uploads\//, "")}`
     : "/default-post.png";
 
-  // Real social media share handler
+  // Social media share handler
   const handleShare = (platform) => {
-    const postSlug = post?.slug || post?._id;
+    const postSlug = post?.slug;
     const postUrl = `${window.location.origin}/post/${postSlug}`;
     const encodedTitle = encodeURIComponent(post.title);
 
@@ -47,10 +61,21 @@ const PostCard = ({ post }) => {
     window.open(shareUrls[platform], "_blank", "noopener,noreferrer");
   };
 
+  // ✅ Like handler
+  const handleLike = async () => {
+    try {
+      const { data } = await API.put(`/posts/${post._id}/like`);
+      setLikes(data.analytics.likes); // update count
+      setLiked(data.liked); // update toggle state
+    } catch (err) {
+      console.error("Error liking post:", err);
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col">
       {/* Thumbnail */}
-      <Link to={`/post/${post.slug || post._id}`}>
+      <Link to={`/post/${post.slug}`}>
         <img
           src={imageUrl}
           alt={title}
@@ -62,7 +87,7 @@ const PostCard = ({ post }) => {
       {/* Content */}
       <div className="p-4 flex flex-col flex-grow">
         {/* Title */}
-        <Link to={`/post/${post.slug || post._id}`}>
+        <Link to={`/post/${post.slug}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-2 line-clamp-2 hover:text-blue-600">
             {title}
           </h2>
@@ -94,9 +119,14 @@ const PostCard = ({ post }) => {
 
             {/* Likes + Shares */}
             <div className="flex items-center gap-3 mt-1">
-              <span className="flex items-center gap-1">
-                <FaThumbsUp className="w-4 h-4 text-blue-500" /> {post.analytics?.likes || 0}
-              </span>
+              <button
+                onClick={handleLike}
+                className={`flex items-center gap-1 ${
+                  liked ? "text-blue-600 font-semibold" : "text-gray-600"
+                }`}
+              >
+                <FaThumbsUp className="w-4 h-4" /> {likes}
+              </button>
 
               {/* Social sharing buttons */}
               <div className="flex items-center gap-2">
@@ -120,7 +150,7 @@ const PostCard = ({ post }) => {
           </div>
 
           <Link
-            to={`/post/${post.slug || post._id}`}
+            to={`/post/${post.slug}`}
             className="text-blue-600 font-medium hover:underline"
           >
             Read More →

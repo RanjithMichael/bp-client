@@ -9,6 +9,7 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
+  const [posts, setPosts] = useState([]); // ✅ separate state for posts
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -27,6 +28,7 @@ const Profile = () => {
     }
   }, [user, navigate]);
 
+  // Fetch profile info
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -44,10 +46,15 @@ const Profile = () => {
             github: "",
           },
         });
+
+        // ✅ Fetch posts separately using new endpoint
+        if (data._id) {
+          const res = await API.get(`/users/${data._id}/posts`);
+          setPosts(res.data.posts || []);
+        }
       } catch (err) {
         console.error("Error fetching profile:", err);
         if (err.response?.status === 401) {
-          
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           navigate("/register");
@@ -215,9 +222,9 @@ const Profile = () => {
         {/* 📝 User Posts */}
         <div className="mb-10">
           <h2 className="text-2xl font-semibold mb-4">Your Posts</h2>
-          {profile.posts?.length > 0 ? (
+          {posts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {profile.posts.map((post) => (
+              {posts.map((post) => (
                 <PostCard key={post._id} post={post} />
               ))}
             </div>
@@ -227,28 +234,44 @@ const Profile = () => {
         </div>
 
         {/* 📰 Subscriptions */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Your Subscriptions</h2>
-          {profile.subscriptions?.length > 0 ? (
-            <ul className="list-disc list-inside space-y-2 text-gray-700">
-              {profile.subscriptions.map((sub) => (
-                <li key={sub._id}>
-                  {sub.author
-                    ? `Author: ${sub.author.name || "Unknown"}`
-                    : `Category: ${sub.category}`}
-                </li>
-              ))}
-            </ul>
+<div>
+  <h2 className="text-2xl font-semibold mb-4">Your Subscriptions</h2>
+  {profile.subscriptions?.length > 0 ? (
+    <ul className="list-disc list-inside space-y-2 text-gray-700">
+      {profile.subscriptions.map((sub) => (
+        <li key={sub._id}>
+          {sub.author ? (
+            <span>
+              Author:{" "}
+              <Link
+                to={`/author/${sub.author._id}`}
+                className="text-blue-600 hover:underline"
+              >
+                {sub.author.name || "Unknown"}
+              </Link>
+            </span>
           ) : (
-            <p className="text-gray-500">No subscriptions yet.</p>
+            <span>
+              Category:{" "}
+              <Link
+                to={`/posts?category=${sub.category}`}
+                className="text-blue-600 hover:underline"
+              >
+                {sub.category}
+              </Link>
+            </span>
           )}
-        </div>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p className="text-gray-500">No subscriptions yet.</p>
+  )}
+</div>
+        
       </div>
     </div>
   );
 };
 
 export default Profile;
-
-
-
