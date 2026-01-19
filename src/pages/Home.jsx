@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PostCard from "../components/PostCard";
 import { getPaginated } from "../api/axiosConfig";
 
@@ -14,55 +14,56 @@ const Home = () => {
   const limit = 6; // posts per page
 
   // Main fetch function
-  const fetchPosts = async (reset = false) => {
-    try {
-      if (reset) setLoading(true);
-      else setLoadingMore(true);
+  const fetchPosts = useCallback(
+    async (reset = false) => {
+      try {
+        if (reset) {
+          setLoading(true);
+          setPage(1); // reset pagination when doing a fresh fetch
+        } else {
+          setLoadingMore(true);
+        }
 
-      const data = await getPaginated("/posts", page, limit, search);
+        const data = await getPaginated("/posts", reset ? 1 : page, limit, search);
 
-      if (!data || !data.posts) throw new Error("No data returned from API");
+        if (!data || !data.posts) throw new Error("No data returned from API");
 
-      if (reset) {
-        setPosts(data.posts);
-      } else {
-        setPosts((prev) => [...prev, ...data.posts]);
+        setPosts((prev) => (reset ? data.posts : [...prev, ...data.posts]));
+        setTotalPages(data.totalPages || 1);
+        setError(null);
+      } catch (err) {
+        console.error("❌ Error fetching posts:", err);
+        const message =
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to fetch posts. Please try again later.";
+        setError(message);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-
-      setTotalPages(data.totalPages || 1);
-      setError(null);
-    } catch (err) {
-      console.error("❌ Error fetching posts:", err);
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to fetch posts. Please try again later.";
-      setError(message);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
+    },
+    [page, search]
+  );
 
   // Search Effect (debounced)
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      setPage(1);
       fetchPosts(true);
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [search]);
+  }, [search, fetchPosts]);
 
   // Fetch when page changes (pagination)
   useEffect(() => {
     if (page > 1) fetchPosts(false);
-  }, [page]);
+  }, [page, fetchPosts]);
 
   // Initial Load
   useEffect(() => {
     fetchPosts(true);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Loading state
   if (loading) {
@@ -82,6 +83,7 @@ const Home = () => {
         <button
           onClick={() => fetchPosts(true)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          aria-label="Retry fetching posts"
         >
           Retry
         </button>
@@ -110,6 +112,7 @@ const Home = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-1/2 border border-gray-300 p-3 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            aria-label="Search posts"
           />
         </div>
 
@@ -136,6 +139,7 @@ const Home = () => {
                   <button
                     onClick={() => setPage((prev) => prev + 1)}
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
+                    aria-label="Load more posts"
                   >
                     Load More
                   </button>
@@ -145,7 +149,9 @@ const Home = () => {
           </>
         ) : (
           <p className="text-center text-gray-200 mt-16 text-xl">
-            No posts found.
+            {search
+              ? `No posts found for "${search}".`
+              : "No posts available yet."}
           </p>
         )}
       </div>
@@ -154,4 +160,3 @@ const Home = () => {
 };
 
 export default Home;
-

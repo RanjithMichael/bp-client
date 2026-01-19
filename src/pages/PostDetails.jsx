@@ -4,8 +4,6 @@ import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 import SubscribeButton from "../components/SubscribeButton";
 import AnalyticsChart from "../components/AnalyticsChart";
-
-// ✅ Toastify
 import { toast } from "react-toastify";
 
 const PostDetails = () => {
@@ -31,19 +29,18 @@ const PostDetails = () => {
         const fetchedPost = data.post;
         setPost(fetchedPost);
 
-        setLikes(fetchedPost.analytics?.likes?.length || 0);
-        setShares(fetchedPost.analytics?.shares || 0);
+        setLikes(fetchedPost.likes?.length || 0);
+        setShares(fetchedPost.shares || 0);
 
         if (user) {
           const userId = user._id;
           setLikedByUser(
-            fetchedPost.analytics?.likes?.some((id) => id.toString() === userId) || false
+            fetchedPost.likes?.some((id) => id.toString() === userId) || false
           );
         }
 
-        // ✅ Fetch comments
-        const commentsRes = await API.get(`/comments/${fetchedPost._id}`);
-        setComments(commentsRes.data.comments || []);
+        // Comments are already populated in post response
+        setComments(fetchedPost.comments || []);
       } catch (err) {
         console.error("Error fetching post:", err);
         setError(
@@ -66,8 +63,8 @@ const PostDetails = () => {
       return;
     }
     try {
-      const { data } = await API.put(`/posts/${post._id}/like`);
-      setLikes(data.analytics.likes);
+      const { data } = await API.patch(`/posts/${post._id}/like`);
+      setLikes(data.likesCount);
       setLikedByUser(data.liked);
       toast.success(data.liked ? "👍 Post liked!" : "👎 Like removed.");
     } catch (err) {
@@ -96,8 +93,9 @@ const PostDetails = () => {
     if (!text.trim()) return;
 
     try {
-      const { data } = await API.post(`/comments/${post._id}`, { text });
-      setComments([data.comment, ...comments]); // prepend new comment
+      const { data } = await API.post(`/posts/${post._id}/comments`, { text });
+      // backend returns updated post with comments populated
+      setComments(data.post.comments || []);
       e.target.reset();
       toast.success("💬 Comment added!");
     } catch (err) {
@@ -106,7 +104,7 @@ const PostDetails = () => {
     }
   };
 
-  // Delete comment (soft delete)
+  // Delete comment (soft delete handled in backend)
   const deleteComment = async (id) => {
     try {
       await API.delete(`/comments/${id}`);
@@ -175,7 +173,10 @@ const PostDetails = () => {
       {/* Subscribe */}
       {user && (
         <div className="mt-4">
-          <SubscribeButton authorId={post?.author?._id} category={post?.category} />
+          <SubscribeButton
+            authorId={post?.author?._id}
+            category={post?.category}
+          />
         </div>
       )}
 

@@ -12,9 +12,7 @@ const API = axios.create({
   timeout: 15000, // prevent hanging requests
 });
 
-
 // REQUEST INTERCEPTOR (Attach JWT token automatically)
-
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -25,9 +23,8 @@ API.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-// RESPONSE INTERCEPTOR
-// (Handle token expiry, auto-retry, errors)
 
+// RESPONSE INTERCEPTOR (Handle token expiry, auto-retry, errors)
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -43,7 +40,7 @@ API.interceptors.response.use(
       }
     }
 
-    // Handle Render cold-start or temporary network errors → retry once
+    // Handle cold-start or timeout → retry once
     if (
       (!error.response || error.code === "ECONNABORTED") &&
       !originalRequest._retry
@@ -63,7 +60,8 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-// Helper for paginated GET requests
+
+// Helpers
 export const getPaginated = async (url, page = 1, limit = 10, search = "") => {
   const params = new URLSearchParams({
     page,
@@ -74,4 +72,15 @@ export const getPaginated = async (url, page = 1, limit = 10, search = "") => {
   const { data } = await API.get(`${url}?${params.toString()}`);
   return data;
 };
+
+export const get = async (url, params = {}) => {
+  const { data } = await API.get(url, { params });
+  return data;
+};
+
+export const post = async (url, body) => {
+  const { data } = await API.post(url, body);
+  return data;
+};
+
 export default API;

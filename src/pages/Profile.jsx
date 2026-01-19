@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 import PostCard from "../components/PostCard";
@@ -9,7 +9,7 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
-  const [posts, setPosts] = useState([]); // ✅ separate state for posts
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -28,7 +28,7 @@ const Profile = () => {
     }
   }, [user, navigate]);
 
-  // Fetch profile info
+  // Fetch profile info + posts
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -47,7 +47,6 @@ const Profile = () => {
           },
         });
 
-        // ✅ Fetch posts separately using new endpoint
         if (data._id) {
           const res = await API.get(`/users/${data._id}/posts`);
           setPosts(res.data.posts || []);
@@ -87,7 +86,7 @@ const Profile = () => {
       const { data } = await API.put("/users/profile", formData);
       setProfile(data);
       setEditing(false);
-      setSuccessMsg("Profile updated successfully!");
+      setSuccessMsg("✅ Profile updated successfully!");
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
       console.error("Error updating profile:", err);
@@ -184,13 +183,11 @@ const Profile = () => {
               {profile.bio && (
                 <p className="text-gray-700 mt-2">Bio: {profile.bio}</p>
               )}
-              {profile.profilePic && (
-                <img
-                  src={profile.profilePic}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full mt-2"
-                />
-              )}
+              <img
+                src={profile.profilePic || "/default-avatar.png"}
+                alt="Profile"
+                className="w-32 h-32 rounded-full mt-2 object-cover"
+              />
               {profile.social && (
                 <div className="flex gap-4 mt-2">
                   {Object.entries(profile.social).map(
@@ -234,41 +231,40 @@ const Profile = () => {
         </div>
 
         {/* 📰 Subscriptions */}
-<div>
-  <h2 className="text-2xl font-semibold mb-4">Your Subscriptions</h2>
-  {profile.subscriptions?.length > 0 ? (
-    <ul className="list-disc list-inside space-y-2 text-gray-700">
-      {profile.subscriptions.map((sub) => (
-        <li key={sub._id}>
-          {sub.author ? (
-            <span>
-              Author:{" "}
-              <Link
-                to={`/author/${sub.author._id}`}
-                className="text-blue-600 hover:underline"
-              >
-                {sub.author.name || "Unknown"}
-              </Link>
-            </span>
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Your Subscriptions</h2>
+          {profile.subscriptions?.length > 0 ? (
+            <ul className="list-disc list-inside space-y-2 text-gray-700">
+              {profile.subscriptions.map((sub) => (
+                <li key={sub._id}>
+                  {sub.author ? (
+                    <span>
+                      Author:{" "}
+                      <Link
+                        to={`/author/${sub.author._id}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {sub.author.name || "Unknown"}
+                      </Link>
+                    </span>
+                  ) : (
+                    <span>
+                      Category:{" "}
+                      <Link
+                        to={`/posts?category=${sub.category}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {sub.category}
+                      </Link>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           ) : (
-            <span>
-              Category:{" "}
-              <Link
-                to={`/posts?category=${sub.category}`}
-                className="text-blue-600 hover:underline"
-              >
-                {sub.category}
-              </Link>
-            </span>
+            <p className="text-gray-500">No subscriptions yet.</p>
           )}
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p className="text-gray-500">No subscriptions yet.</p>
-  )}
-</div>
-        
+        </div>
       </div>
     </div>
   );

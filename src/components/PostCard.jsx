@@ -10,15 +10,15 @@ import {
   FaEnvelope,
 } from "react-icons/fa";
 import { useState } from "react";
-import API from "../api/axiosConfig"; // ✅ ensure you have axios instance with token
+import API from "../api/axiosConfig"; // axios instance with token
 
 // Utility to strip HTML tags for safe snippet
 const stripHtml = (html) => html.replace(/<[^>]+>/g, "");
 
 const PostCard = ({ post }) => {
   const [imageError, setImageError] = useState(false);
-  const [likes, setLikes] = useState(post.analytics?.likes ?? 0); // ✅ track likes count
-  const [liked, setLiked] = useState(false); // ✅ track if user liked
+  const [likes, setLikes] = useState(post.likes?.length ?? 0); // ✅ likes are now top-level
+  const [liked, setLiked] = useState(false);
 
   // Fallbacks and formatting
   const title = post?.title || "Untitled Post";
@@ -61,12 +61,12 @@ const PostCard = ({ post }) => {
     window.open(shareUrls[platform], "_blank", "noopener,noreferrer");
   };
 
-  // ✅ Like handler
+  // ✅ Like handler (PATCH instead of PUT)
   const handleLike = async () => {
     try {
-      const { data } = await API.put(`/posts/${post._id}/like`);
-      setLikes(data.analytics.likes); // update count
-      setLiked(data.liked); // update toggle state
+      const { data } = await API.patch(`/posts/${post._id}/like`);
+      setLikes(data.likesCount); // backend returns likesCount
+      setLiked(data.liked); // backend returns toggle state
     } catch (err) {
       console.error("Error liking post:", err);
     }
@@ -124,25 +124,46 @@ const PostCard = ({ post }) => {
                 className={`flex items-center gap-1 ${
                   liked ? "text-blue-600 font-semibold" : "text-gray-600"
                 }`}
+                aria-label="Like this post"
               >
                 <FaThumbsUp className="w-4 h-4" /> {likes}
               </button>
 
               {/* Social sharing buttons */}
               <div className="flex items-center gap-2">
-                <button onClick={() => handleShare("facebook")} title="Share on Facebook">
+                <button
+                  onClick={() => handleShare("facebook")}
+                  title="Share on Facebook"
+                  aria-label="Share on Facebook"
+                >
                   <FaFacebook className="w-4 h-4 text-blue-600 hover:text-blue-700" />
                 </button>
-                <button onClick={() => handleShare("twitter")} title="Share on Twitter">
+                <button
+                  onClick={() => handleShare("twitter")}
+                  title="Share on Twitter"
+                  aria-label="Share on Twitter"
+                >
                   <FaTwitter className="w-4 h-4 text-sky-500 hover:text-sky-600" />
                 </button>
-                <button onClick={() => handleShare("linkedin")} title="Share on LinkedIn">
+                <button
+                  onClick={() => handleShare("linkedin")}
+                  title="Share on LinkedIn"
+                  aria-label="Share on LinkedIn"
+                >
                   <FaLinkedin className="w-4 h-4 text-blue-700 hover:text-blue-800" />
                 </button>
-                <button onClick={() => handleShare("whatsapp")} title="Share on WhatsApp">
+                <button
+                  onClick={() => handleShare("whatsapp")}
+                  title="Share on WhatsApp"
+                  aria-label="Share on WhatsApp"
+                >
                   <FaWhatsapp className="w-4 h-4 text-green-500 hover:text-green-600" />
                 </button>
-                <button onClick={() => handleShare("email")} title="Share via Email">
+                <button
+                  onClick={() => handleShare("email")}
+                  title="Share via Email"
+                  aria-label="Share via Email"
+                >
                   <FaEnvelope className="w-4 h-4 text-gray-600 hover:text-gray-800" />
                 </button>
               </div>
