@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import API from "../api/axiosConfig";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
 const Register = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleChange = (e) =>
@@ -12,13 +16,21 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await API.post("/auth/register", form);
-      console.log("✅ Registration success:", res.data);
-      navigate("/login");
+
+      // ✅ Automatically log the user in after registration
+      login(res.data.user, res.data.token);
+
+      toast.success("Account created successfully!");
+      navigate("/"); // redirect to homepage
     } catch (err) {
       console.error("❌ Registration error:", err.response || err.message);
       setError(err.response?.data?.message || "Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,9 +84,10 @@ const Register = () => {
 
         <button
           type="submit"
-          className="bg-blue-600 text-white font-semibold p-3 rounded w-full hover:bg-blue-700 transition"
+          disabled={loading}
+          className="bg-blue-600 text-white font-semibold p-3 rounded w-full hover:bg-blue-700 transition disabled:opacity-70"
         >
-          Register
+          {loading ? "Registering..." : "Register"}
         </button>
       </form>
     </div>
@@ -82,4 +95,3 @@ const Register = () => {
 };
 
 export default Register;
-

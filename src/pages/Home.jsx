@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import PostCard from "../components/PostCard";
-import { getPaginated } from "../api/axiosConfig";
+import { getPaginated } from "../api/axiosConfig.js"; // ✅ correct path
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
@@ -63,7 +63,8 @@ const Home = () => {
   // Initial Load
   useEffect(() => {
     fetchPosts(true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Loading state
   if (loading) {

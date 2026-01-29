@@ -1,8 +1,11 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 import PostCard from "../components/PostCard";
+
+// ✅ Import service helpers
+import { get, put } from "../api/axiosConfig.js";
+import { getUserPosts } from "../api/posts.js";
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
@@ -33,7 +36,9 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const { data } = await API.get("/users/profile");
+
+        // ✅ Fetch profile
+        const data = await get("/users/profile");
         setProfile(data);
         setFormData({
           name: data.name || "",
@@ -47,9 +52,10 @@ const Profile = () => {
           },
         });
 
+        // ✅ Fetch posts using service
         if (data._id) {
-          const res = await API.get(`/users/${data._id}/posts`);
-          setPosts(res.data.posts || []);
+          const userPosts = await getUserPosts();
+          setPosts(userPosts || []);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -68,6 +74,7 @@ const Profile = () => {
     fetchProfile();
   }, [navigate]);
 
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (["website", "twitter", "linkedin", "github"].includes(name)) {
@@ -80,10 +87,11 @@ const Profile = () => {
     }
   };
 
+  // Handle profile update
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await API.put("/users/profile", formData);
+      const data = await put("/users/profile", formData);
       setProfile(data);
       setEditing(false);
       setSuccessMsg("✅ Profile updated successfully!");

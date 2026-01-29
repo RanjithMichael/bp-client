@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional custom styles */
 body {
   background-color: #f9fafb; /* Tailwind bg-gray-50 */
   color: #111827; /* Tailwind text-gray-900 */
   font-family: 'Inter', sans-serif;
 }
+
 

@@ -61,7 +61,7 @@ API.interceptors.response.use(
   }
 );
 
-// Helpers
+// Helpers 
 export const getPaginated = async (url, page = 1, limit = 10, search = "") => {
   const params = new URLSearchParams({
     page,
@@ -80,6 +80,16 @@ export const get = async (url, params = {}) => {
 
 export const post = async (url, body) => {
   const { data } = await API.post(url, body);
+  return data;
+};
+
+export const put = async (url, body) => {
+  const { data } = await API.put(url, body);
+  return data;
+};
+
+export const remove = async (url) => {
+  const { data } = await API.delete(url);
   return data;
 };
 
