@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import PostCard from "../components/PostCard";
-import { getPaginated } from "../api/axiosConfig.js"; // ✅ correct path
+import { getPaginated } from "../api/axiosConfig.js";
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
@@ -11,24 +11,44 @@ const Home = () => {
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const limit = 6; // posts per page
+  const limit = 6;
 
-  // Main fetch function
   const fetchPosts = useCallback(
     async (reset = false) => {
       try {
         if (reset) {
           setLoading(true);
-          setPage(1); // reset pagination when doing a fresh fetch
+          setPage(1);
         } else {
           setLoadingMore(true);
         }
 
-        const data = await getPaginated("/posts", reset ? 1 : page, limit, search);
+        const data = await getPaginated(
+          "/posts",
+          reset ? 1 : page,
+          limit,
+          search
+        );
 
-        if (!data || !data.posts) throw new Error("No data returned from API");
+        if (!data || !data.posts) {
+          throw new Error("No data returned from API");
+        }
 
-        setPosts((prev) => (reset ? data.posts : [...prev, ...data.posts]));
+        // ✅ FILTER INVALID POSTS (VERY IMPORTANT)
+        const validPosts = data.posts.filter(
+          (post) =>
+            post &&
+            post._id &&
+            post.slug && // slug must exist
+            post.title &&
+            post.content &&
+            post.isDeleted !== true
+        );
+
+        setPosts((prev) =>
+          reset ? validPosts : [...prev, ...validPosts]
+        );
+
         setTotalPages(data.totalPages || 1);
         setError(null);
       } catch (err) {
@@ -46,27 +66,26 @@ const Home = () => {
     [page, search]
   );
 
-  // Search Effect (debounced)
+  // 🔍 Search debounce
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
+    const delay = setTimeout(() => {
       fetchPosts(true);
     }, 500);
 
-    return () => clearTimeout(delayDebounceFn);
+    return () => clearTimeout(delay);
   }, [search, fetchPosts]);
 
-  // Fetch when page changes (pagination)
+  // Pagination
   useEffect(() => {
     if (page > 1) fetchPosts(false);
   }, [page, fetchPosts]);
 
-  // Initial Load
+  // Initial load
   useEffect(() => {
     fetchPosts(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-900">
@@ -76,7 +95,6 @@ const Home = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-900 px-4 text-center">
@@ -84,7 +102,6 @@ const Home = () => {
         <button
           onClick={() => fetchPosts(true)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          aria-label="Retry fetching posts"
         >
           Retry
         </button>
@@ -93,19 +110,9 @@ const Home = () => {
   }
 
   return (
-    <div
-      className="
-        min-h-screen
-        bg-[url('/images/Big-Ben-At-Night.jpg')]
-        bg-cover
-        bg-center
-        relative
-      "
-    >
-      <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-
-      <div className="relative z-10 container mx-auto px-4 py-10">
-        {/* Search Bar */}
+    <div className="min-h-screen bg-gray-900 relative">
+      <div className="container mx-auto px-4 py-10">
+        {/* Search */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <input
             type="text"
@@ -113,7 +120,6 @@ const Home = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-1/2 border border-gray-300 p-3 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-            aria-label="Search posts"
           />
         </div>
 
@@ -126,7 +132,6 @@ const Home = () => {
               ))}
             </div>
 
-            {/* Load More Button */}
             {page < totalPages && (
               <div className="flex justify-center mt-10">
                 {loadingMore ? (
@@ -140,7 +145,6 @@ const Home = () => {
                   <button
                     onClick={() => setPage((prev) => prev + 1)}
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
-                    aria-label="Load more posts"
                   >
                     Load More
                   </button>
@@ -149,7 +153,7 @@ const Home = () => {
             )}
           </>
         ) : (
-          <p className="text-center text-gray-200 mt-16 text-xl">
+          <p className="text-center text-gray-300 mt-16 text-xl">
             {search
               ? `No posts found for "${search}".`
               : "No posts available yet."}
