@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import PostCard from "../components/PostCard";
 import { getPaginated } from "../api/axiosConfig.js";
@@ -23,32 +24,24 @@ const Home = () => {
           setLoadingMore(true);
         }
 
-        const data = await getPaginated(
-          "/posts",
-          reset ? 1 : page,
-          limit,
-          search
-        );
+        const data = await getPaginated("/posts", reset ? 1 : page, limit, search);
+        const rawPosts = data.posts || data.data || [];
 
-        if (!data || !data.posts) {
-          throw new Error("No data returned from API");
+        if (!Array.isArray(rawPosts)) {
+          throw new Error("Invalid post data format");
         }
 
-        // ✅ FILTER INVALID POSTS (VERY IMPORTANT)
-        const validPosts = data.posts.filter(
+        const validPosts = rawPosts.filter(
           (post) =>
             post &&
             post._id &&
-            post.slug && // slug must exist
+            post.slug &&
             post.title &&
             post.content &&
             post.isDeleted !== true
         );
 
-        setPosts((prev) =>
-          reset ? validPosts : [...prev, ...validPosts]
-        );
-
+        setPosts((prev) => (reset ? validPosts : [...prev, ...validPosts]));
         setTotalPages(data.totalPages || 1);
         setError(null);
       } catch (err) {
@@ -63,15 +56,16 @@ const Home = () => {
         setLoadingMore(false);
       }
     },
-    [page, search]
+    [page, search, limit]
   );
 
   // 🔍 Search debounce
   useEffect(() => {
     const delay = setTimeout(() => {
+      setPosts([]);
+      setPage(1);
       fetchPosts(true);
     }, 500);
-
     return () => clearTimeout(delay);
   }, [search, fetchPosts]);
 
@@ -83,7 +77,6 @@ const Home = () => {
   // Initial load
   useEffect(() => {
     fetchPosts(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {
@@ -100,7 +93,11 @@ const Home = () => {
       <div className="flex flex-col justify-center items-center h-screen bg-gray-900 px-4 text-center">
         <p className="text-red-400 text-lg mb-4">{error}</p>
         <button
-          onClick={() => fetchPosts(true)}
+          onClick={() => {
+            setPosts([]);
+            setPage(1);
+            fetchPosts(true);
+          }}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           Retry
@@ -116,6 +113,7 @@ const Home = () => {
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <input
             type="text"
+            aria-label="Search posts"
             placeholder="🔍 Search posts..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -144,6 +142,7 @@ const Home = () => {
                 ) : (
                   <button
                     onClick={() => setPage((prev) => prev + 1)}
+                    aria-label="Load more posts"
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
                   >
                     Load More
@@ -155,8 +154,8 @@ const Home = () => {
         ) : (
           <p className="text-center text-gray-300 mt-16 text-xl">
             {search
-              ? `No posts found for "${search}".`
-              : "No posts available yet."}
+              ? `No posts found for "${search}". Try a different keyword.`
+              : "No posts available yet. Be the first to create one!"}
           </p>
         )}
       </div>

@@ -1,18 +1,15 @@
 import axios from "axios";
 
-// Automatically choose base URL depending on environment
-const BASE_URL =
-  import.meta.env.VITE_API_URL || "https://bp-server-4.onrender.com/api";
+// Base URL: use env or fallback to relative /api
+const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 const API = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  timeout: 15000, // prevent hanging requests
+  headers: { "Content-Type": "application/json" },
+  timeout: 15000,
 });
 
-// REQUEST INTERCEPTOR (Attach JWT token automatically)
+// REQUEST INTERCEPTOR
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -24,13 +21,13 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// RESPONSE INTERCEPTOR (Handle token expiry, auto-retry, errors)
+// RESPONSE INTERCEPTOR
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 Unauthorized → redirect to login
+    // Handle 401 Unauthorized
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -40,17 +37,15 @@ API.interceptors.response.use(
       }
     }
 
-    // Handle cold-start or timeout → retry once
-    if (
-      (!error.response || error.code === "ECONNABORTED") &&
-      !originalRequest._retry
-    ) {
-      originalRequest._retry = true;
-      console.warn("🔁 Retrying request due to timeout or network issue...");
-      return API(originalRequest);
+    // Retry GET requests once on timeout/network issue
+    if ((!error.response || error.code === "ECONNABORTED") && !originalRequest._retry) {
+      if (originalRequest.method === "get") {
+        originalRequest._retry = true;
+        console.warn("🔁 Retrying GET request due to timeout or network issue...");
+        return API(originalRequest);
+      }
     }
 
-    // Optional centralized error logging
     console.error("API Error:", {
       url: originalRequest?.url,
       status: error.response?.status,
@@ -61,14 +56,9 @@ API.interceptors.response.use(
   }
 );
 
-// Helpers 
+// Helpers
 export const getPaginated = async (url, page = 1, limit = 10, search = "") => {
-  const params = new URLSearchParams({
-    page,
-    limit,
-    ...(search && { search }),
-  });
-
+  const params = new URLSearchParams({ page, limit, ...(search && { search }) });
   const { data } = await API.get(`${url}?${params.toString()}`);
   return data;
 };
@@ -90,6 +80,14 @@ export const put = async (url, body) => {
 
 export const remove = async (url) => {
   const { data } = await API.delete(url);
+  return data;
+};
+
+// Upload helper for images/files
+export const upload = async (url, formData) => {
+  const { data } = await API.post(url, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
 };
 

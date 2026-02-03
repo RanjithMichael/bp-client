@@ -3,9 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import PostCard from "../components/PostCard";
 
-// ✅ Import service helpers
-import { get, put } from "../api/axiosConfig.js";
-import { getUserPosts } from "../api/posts.js";
+// API helpers
+import { get, put } from "../api/axiosConfig";
+import { getUserPosts } from "../api/posts";
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
@@ -17,29 +17,37 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     bio: "",
     profilePic: "",
-    social: { website: "", twitter: "", linkedin: "", github: "" },
+    social: {
+      website: "",
+      twitter: "",
+      linkedin: "",
+      github: "",
+    },
   });
 
-  // Redirect to /register if not logged in
+  // Redirect if not logged in
   useEffect(() => {
     if (!user) {
       navigate("/register");
     }
   }, [user, navigate]);
 
-  // Fetch profile info + posts
+  // Fetch profile & posts
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
+        setError(null);
 
-        // ✅ Fetch profile
+        // Profile
         const data = await get("/users/profile");
         setProfile(data);
+
         setFormData({
           name: data.name || "",
           bio: data.bio || "",
@@ -52,16 +60,13 @@ const Profile = () => {
           },
         });
 
-        // ✅ Fetch posts using service
-        if (data._id) {
-          const userPosts = await getUserPosts();
-          setPosts(userPosts || []);
-        }
+        // Posts
+        const userPosts = await getUserPosts();
+        setPosts(userPosts || []);
       } catch (err) {
         console.error("Error fetching profile:", err);
         if (err.response?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
+          localStorage.clear();
           navigate("/register");
         } else {
           setError("Failed to load profile.");
@@ -74,9 +79,10 @@ const Profile = () => {
     fetchProfile();
   }, [navigate]);
 
-  // Handle form changes
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (["website", "twitter", "linkedin", "github"].includes(name)) {
       setFormData((prev) => ({
         ...prev,
@@ -87,12 +93,12 @@ const Profile = () => {
     }
   };
 
-  // Handle profile update
+  // Update profile
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await put("/users/profile", formData);
-      setProfile(data);
+      const updated = await put("/users/profile", formData);
+      setProfile(updated);
       setEditing(false);
       setSuccessMsg("✅ Profile updated successfully!");
       setTimeout(() => setSuccessMsg(""), 3000);
@@ -102,15 +108,17 @@ const Profile = () => {
     }
   };
 
+  // Loading
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4" />
         <p className="text-gray-700 text-lg">Loading profile...</p>
       </div>
     );
   }
 
+  // Error
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -122,15 +130,16 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        {/* 🧑 User Info */}
-        <div className="mb-8 border-b pb-4">
-          <h1 className="text-3xl font-bold mb-2">{profile.name}'s Profile</h1>
+        {/* 👤 Profile Info */}
+        <div className="mb-8 border-b pb-6">
+          <h1 className="text-3xl font-bold mb-2">
+            {profile.name}'s Profile
+          </h1>
           <p className="text-gray-600 mb-2">Email: {profile.email}</p>
 
           {editing ? (
             <form onSubmit={handleSubmit} className="space-y-3 mt-4">
               <input
-                type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
@@ -138,7 +147,6 @@ const Profile = () => {
                 className="w-full border p-2 rounded"
               />
               <input
-                type="text"
                 name="bio"
                 value={formData.bio}
                 onChange={handleChange}
@@ -146,24 +154,21 @@ const Profile = () => {
                 className="w-full border p-2 rounded"
               />
               <input
-                type="text"
                 name="profilePic"
                 value={formData.profilePic}
                 onChange={handleChange}
-                placeholder="Profile Picture URL"
+                placeholder="Profile picture URL"
                 className="w-full border p-2 rounded"
               />
 
-              {/* Social Links */}
               <div className="grid grid-cols-2 gap-2">
                 {["website", "twitter", "linkedin", "github"].map((field) => (
                   <input
                     key={field}
-                    type="text"
                     name={field}
                     value={formData.social[field]}
                     onChange={handleChange}
-                    placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                    placeholder={field}
                     className="w-full border p-2 rounded"
                   />
                 ))}
@@ -184,20 +189,27 @@ const Profile = () => {
                   Cancel
                 </button>
               </div>
-              {successMsg && <p className="text-green-600">{successMsg}</p>}
+
+              {successMsg && (
+                <p className="text-green-600">{successMsg}</p>
+              )}
             </form>
           ) : (
             <>
               {profile.bio && (
-                <p className="text-gray-700 mt-2">Bio: {profile.bio}</p>
+                <p className="text-gray-700 mt-2">
+                  Bio: {profile.bio}
+                </p>
               )}
+
               <img
                 src={profile.profilePic || "/default-avatar.png"}
                 alt="Profile"
-                className="w-32 h-32 rounded-full mt-2 object-cover"
+                className="w-32 h-32 rounded-full mt-3 object-cover"
               />
+
               {profile.social && (
-                <div className="flex gap-4 mt-2">
+                <div className="flex gap-4 mt-3 flex-wrap">
                   {Object.entries(profile.social).map(
                     ([key, value]) =>
                       value && (
@@ -206,17 +218,18 @@ const Profile = () => {
                           href={value}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
+                          className="text-blue-600 hover:underline"
                         >
-                          {key.charAt(0).toUpperCase() + key.slice(1)}
+                          {key}
                         </a>
                       )
                   )}
                 </div>
               )}
+
               <button
                 onClick={() => setEditing(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded mt-3 hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded mt-4 hover:bg-blue-700"
               >
                 Edit Profile
               </button>
@@ -234,29 +247,33 @@ const Profile = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">You haven't created any posts yet.</p>
+            <p className="text-gray-500">
+              You haven't created any posts yet.
+            </p>
           )}
         </div>
 
-        {/* 📰 Subscriptions */}
+        {/* 🔔 Subscriptions */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4">Your Subscriptions</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            Your Subscriptions
+          </h2>
           {profile.subscriptions?.length > 0 ? (
-            <ul className="list-disc list-inside space-y-2 text-gray-700">
+            <ul className="list-disc list-inside space-y-2">
               {profile.subscriptions.map((sub) => (
                 <li key={sub._id}>
                   {sub.author ? (
-                    <span>
+                    <>
                       Author:{" "}
                       <Link
                         to={`/author/${sub.author._id}`}
                         className="text-blue-600 hover:underline"
                       >
-                        {sub.author.name || "Unknown"}
+                        {sub.author.name}
                       </Link>
-                    </span>
+                    </>
                   ) : (
-                    <span>
+                    <>
                       Category:{" "}
                       <Link
                         to={`/posts?category=${sub.category}`}
@@ -264,7 +281,7 @@ const Profile = () => {
                       >
                         {sub.category}
                       </Link>
-                    </span>
+                    </>
                   )}
                 </li>
               ))}

@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import API from "../api/axiosConfig";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
 
@@ -11,11 +11,19 @@ const Register = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleChange = (e) =>
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (error) setError("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await API.post("/auth/register", form);
@@ -61,7 +69,10 @@ const Register = () => {
           type="text"
           name="name"
           placeholder="Full Name"
+          value={form.name}
           onChange={handleChange}
+          autoComplete="name"
+          aria-label="Full Name"
           className="border p-3 rounded w-full mb-3 shadow-sm focus:ring focus:ring-blue-300"
           required
         />
@@ -69,7 +80,10 @@ const Register = () => {
           type="email"
           name="email"
           placeholder="Email"
+          value={form.email}
           onChange={handleChange}
+          autoComplete="email"
+          aria-label="Email"
           className="border p-3 rounded w-full mb-3 shadow-sm focus:ring focus:ring-blue-300"
           required
         />
@@ -77,7 +91,10 @@ const Register = () => {
           type="password"
           name="password"
           placeholder="Password"
+          value={form.password}
           onChange={handleChange}
+          autoComplete="new-password"
+          aria-label="Password"
           className="border p-3 rounded w-full mb-5 shadow-sm focus:ring focus:ring-blue-300"
           required
         />
@@ -85,10 +102,26 @@ const Register = () => {
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 text-white font-semibold p-3 rounded w-full hover:bg-blue-700 transition disabled:opacity-70"
+          aria-label="Register"
+          className="bg-blue-600 text-white font-semibold p-3 rounded w-full hover:bg-blue-700 transition disabled:opacity-70 flex justify-center items-center"
         >
-          {loading ? "Registering..." : "Register"}
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              Registering...
+            </span>
+          ) : (
+            "Register"
+          )}
         </button>
+
+        {/* Extra link */}
+        <p className="text-center text-sm mt-4">
+          Already have an account?{" "}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Login
+          </Link>
+        </p>
       </form>
     </div>
   );

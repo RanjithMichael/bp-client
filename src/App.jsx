@@ -1,10 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
-
-// ✅ Toastify imports
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -45,8 +43,8 @@ function App() {
               {/* ---------- Post Routes ---------- */}
               <Route path="/post/:slug" element={<PostDetails />} />
 
-              {/* Author page route */}
-              <Route path="/author/:id" element={<AuthorPage />} />
+              {/* Author page route (use username for consistency) */}
+              <Route path="/author/:username" element={<AuthorPage />} />
 
               {/* ---------- Protected Routes ---------- */}
               <Route
@@ -79,7 +77,10 @@ function App() {
                 path="*"
                 element={
                   <div className="text-center py-20 text-gray-600 text-xl">
-                    404 - Page Not Found
+                    404 - Page Not Found <br />
+                    <Link to="/" className="text-blue-600 hover:underline">
+                      Go Home
+                    </Link>
                   </div>
                 }
               />
@@ -103,6 +104,7 @@ function App() {
             draggable
             pauseOnHover
             theme="light"
+            limit={3}
           />
         </div>
       </Router>

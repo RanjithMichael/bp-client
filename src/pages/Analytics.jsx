@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "../api/axiosConfig";
+import API from "../api/axiosConfig";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 
-// ✅ Register Chart.js components
+// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function Analytics() {
@@ -24,7 +24,7 @@ export default function Analytics() {
       try {
         setLoading(true);
         setError(null);
-        const { data } = await axios.get("/posts"); // fetch all posts
+        const { data } = await API.get("/posts");
         setPosts(data.posts || []);
       } catch (err) {
         console.error("Error fetching analytics:", err);
@@ -36,29 +36,29 @@ export default function Analytics() {
     fetchAnalytics();
   }, []);
 
-  // ✅ Per-post chart
+  // Per-post chart
   const chartData = {
-    labels: posts.map((post) => post.title),
+    labels: posts.map((post) => post.title?.slice(0, 20) || "Untitled"),
     datasets: [
       {
         label: "Views",
         data: posts.map((post) => post.analytics?.views || 0),
-        backgroundColor: "rgba(59, 130, 246, 0.6)", // blue
+        backgroundColor: "rgba(59, 130, 246, 0.6)",
       },
       {
         label: "Likes",
         data: posts.map((post) => post.analytics?.likes?.length || 0),
-        backgroundColor: "rgba(34, 197, 94, 0.6)", // green
+        backgroundColor: "rgba(34, 197, 94, 0.6)",
       },
       {
         label: "Shares",
         data: posts.map((post) => post.analytics?.shares || 0),
-        backgroundColor: "rgba(168, 85, 247, 0.6)", // purple
+        backgroundColor: "rgba(168, 85, 247, 0.6)",
       },
       {
         label: "Comments",
         data: posts.map((post) => post.comments?.length || 0),
-        backgroundColor: "rgba(239, 68, 68, 0.6)", // red
+        backgroundColor: "rgba(239, 68, 68, 0.6)",
       },
     ],
   };
@@ -71,7 +71,7 @@ export default function Analytics() {
     },
   };
 
-  // ✅ Per-author aggregation
+  // Per-author aggregation
   const authorStats = posts.reduce((acc, post) => {
     const authorName = post.author?.name || "Unknown Author";
     if (!acc[authorName]) {
@@ -129,8 +129,14 @@ export default function Analytics() {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-red-500 text-lg">{error}</p>
+      <div className="flex flex-col justify-center items-center h-screen">
+        <p className="text-red-500 text-lg mb-4">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -138,7 +144,7 @@ export default function Analytics() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h2 className="text-2xl font-bold mb-6">📊 Post Analytics</h2>
-      <Bar data={chartData} options={chartOptions} />
+      <Bar data={chartData} options={chartOptions} aria-label="Post analytics chart" />
 
       {/* Summary Stats */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -171,7 +177,7 @@ export default function Analytics() {
       {/* Author Breakdown */}
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6">👩‍💻 Author Analytics</h2>
-        <Bar data={authorData} options={authorOptions} />
+        <Bar data={authorData} options={authorOptions} aria-label="Author analytics chart" />
       </div>
     </div>
   );

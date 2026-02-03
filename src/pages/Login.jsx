@@ -1,11 +1,12 @@
 import { useState, useContext } from "react";
 import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -15,11 +16,16 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
+      setError("");
       const res = await API.post("/auth/login", form);
       login(res.data.user, res.data.token);
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      console.error("Login error:", err);
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -27,7 +33,7 @@ const Login = () => {
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
       style={{
-        backgroundImage: "url('/images/london-eye-england.webp')", 
+        backgroundImage: "url('/images/london-eye-england.webp')",
       }}
     >
       {/* Dark overlay */}
@@ -50,7 +56,10 @@ const Login = () => {
           type="email"
           name="email"
           placeholder="Email"
+          value={form.email}
           onChange={handleChange}
+          autoComplete="email"
+          aria-label="Email address"
           className="border p-3 rounded w-full mb-3 shadow-sm focus:ring focus:ring-blue-300"
           required
         />
@@ -58,17 +67,32 @@ const Login = () => {
           type="password"
           name="password"
           placeholder="Password"
+          value={form.password}
           onChange={handleChange}
+          autoComplete="current-password"
+          aria-label="Password"
           className="border p-3 rounded w-full mb-5 shadow-sm focus:ring focus:ring-blue-300"
           required
         />
 
         <button
           type="submit"
-          className="bg-blue-600 text-white font-semibold p-3 rounded w-full hover:bg-blue-700 transition"
+          disabled={loading}
+          aria-label="Login"
+          className="bg-blue-600 text-white font-semibold p-3 rounded w-full hover:bg-blue-700 transition disabled:opacity-50"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
+
+        {/* Extra links */}
+        <div className="flex justify-between mt-4 text-sm">
+          <Link to="/forgot-password" className="text-blue-600 hover:underline">
+            Forgot Password?
+          </Link>
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Register
+          </Link>
+        </div>
       </form>
     </div>
   );

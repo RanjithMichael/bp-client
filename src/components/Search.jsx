@@ -20,7 +20,7 @@ export default function Search({ query }) {
         setError(null);
 
         const res = await API.get(`/posts?search=${encodeURIComponent(query)}`);
-        setResults(res.data);
+        setResults(res.data.posts || []);
       } catch (err) {
         console.error(err?.response?.data || err);
         setError("Failed to fetch posts. Please try again.");
@@ -32,8 +32,8 @@ export default function Search({ query }) {
     fetchPosts();
   }, [query]);
 
-  const handleClick = (postId) => {
-    navigate(`/posts/${postId}`);
+  const handleClick = (slug) => {
+    navigate(`/post/${slug}`);
   };
 
   // Loading state
@@ -58,21 +58,27 @@ export default function Search({ query }) {
   // Results
   return (
     <div className="space-y-3">
-      {results.length ? (
+      {query && results.length ? (
         results.map((post) => (
           <div
             key={post._id}
+            role="button"
+            aria-label={`View post: ${post.title}`}
             className="p-3 border border-gray-200 rounded-lg hover:shadow-md hover:bg-gray-50 cursor-pointer transition flex flex-col sm:flex-row sm:justify-between sm:items-center"
-            onClick={() => handleClick(post._id)}
+            onClick={() => handleClick(post.slug)}
           >
             <div>
               <h3 className="font-semibold text-lg">{post.title}</h3>
-              <p className="text-gray-500 text-sm">{post.author?.name}</p>
+              <p className="text-gray-500 text-sm">
+                {post.author?.name || post.author?.username || "Unknown Author"}
+              </p>
             </div>
           </div>
         ))
-      ) : (
+      ) : query ? (
         <p className="text-gray-500 py-4">No posts found</p>
+      ) : (
+        <p className="text-gray-500 py-4">Enter a keyword to search posts</p>
       )}
     </div>
   );
