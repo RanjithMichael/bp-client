@@ -18,7 +18,7 @@ const Login = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await API.post("/auth/login", form);
+      const res = await API.post("api/auth/login", form);
       login(res.data.user, res.data.token);
       navigate("/");
     } catch (err) {
