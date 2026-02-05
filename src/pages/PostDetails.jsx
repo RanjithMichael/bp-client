@@ -5,6 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import SubscribeButton from "../components/SubscribeButton";
 import AnalyticsChart from "../components/AnalyticsChart";
 import { toast } from "react-toastify";
+import { FaUserCircle } from "react-icons/fa";
 
 const PostDetails = () => {
   const { slug } = useParams();
@@ -35,9 +36,7 @@ const PostDetails = () => {
 
         if (user) {
           setLikedByUser(
-            fetchedPost.likes?.some(
-              (id) => id.toString() === user._id
-            ) || false
+            fetchedPost.likes?.some((id) => id.toString() === user._id) || false
           );
         }
       } catch (err) {
@@ -91,10 +90,7 @@ const PostDetails = () => {
     if (!text.trim()) return;
 
     try {
-      const { data } = await API.post(
-        `/posts/${post._id}/comments`,
-        { text }
-      );
+      const { data } = await API.post(`/posts/${post._id}/comments`, { text });
       setComments(data.post.comments || []);
       e.target.reset();
       toast.success("💬 Comment added!");
@@ -137,16 +133,12 @@ const PostDetails = () => {
   }
 
   const BASE_URL =
-    import.meta.env.VITE_API_URL ||
-    "https://bp-server-4.onrender.com/api";
+    import.meta.env.VITE_API_URL || "https://bp-server-8.onrender.com/api";
 
   const imageUrl = post?.image
     ? post.image.startsWith("http")
       ? post.image
-      : `${BASE_URL.replace("/api", "")}/${post.image.replace(
-          /\\/g,
-          "/"
-        )}`
+      : `${BASE_URL.replace("/api", "")}/${post.image.replace(/\\/g, "/")}`
     : "/default-post.png";
 
   return (
@@ -160,9 +152,7 @@ const PostDetails = () => {
       />
 
       {/* Title */}
-      <h1 className="text-3xl font-bold mb-4 text-gray-900">
-        {post?.title}
-      </h1>
+      <h1 className="text-3xl font-bold mb-4 text-gray-900">{post?.title}</h1>
 
       {/* Author */}
       <p className="text-gray-600 mb-4">
@@ -173,9 +163,7 @@ const PostDetails = () => {
         >
           {post?.author?.name || "Unknown Author"}
         </Link>{" "}
-        •{" "}
-        {post?.createdAt &&
-          new Date(post.createdAt).toLocaleDateString()}
+        • {post?.createdAt && new Date(post.createdAt).toLocaleDateString()}
       </p>
 
       {/* Content */}
@@ -231,9 +219,9 @@ const PostDetails = () => {
               name="comment"
               type="text"
               placeholder="Write a comment..."
-              className="flex-grow border rounded px-3 py-2"
+              className="flex-grow border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
-            <button className="bg-blue-600 text-white px-4 py-2 rounded">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
               Post
             </button>
           </form>
@@ -242,31 +230,38 @@ const PostDetails = () => {
         )}
 
         {comments.filter((c) => !c.isDeleted).length === 0 ? (
-          <p className="text-gray-500">
-            No comments yet. Be the first to comment!
-          </p>
+          <p className="text-gray-500">No comments yet. Be the first to comment!</p>
         ) : (
           <ul className="space-y-4">
             {comments
               .filter((c) => !c.isDeleted)
               .map((c) => (
-                <li key={c._id} className="border-b pb-2">
-                  <p className="text-gray-800">{c.text}</p>
-                  <span className="text-sm text-gray-500">
-                    by {c.user?.name || "Unknown"} •{" "}
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </span>
+                <li
+                  key={c._id}
+                  className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg shadow-sm"
+                >
+                  <FaUserCircle className="text-gray-400 text-2xl" />
+                  <div className="flex-grow">
+                    <p className="text-gray-800">{c.text}</p>
+                                        <span className="text-sm text-gray-500">
+                      by {c.user?.name || "Unknown"} •{" "}
+                      {new Date(c.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
 
-                  {user &&
-                    (user._id === c.user?._id ||
-                      user.isAdmin) && (
-                      <button
-                        onClick={() => deleteComment(c._id)}
-                        className="ml-4 text-red-500 hover:underline text-sm"
-                      >
-                        Delete
-                      </button>
-                    )}
+                    {user &&
+                      (user._id === c.user?._id || user.isAdmin) && (
+                        <button
+                          onClick={() => deleteComment(c._id)}
+                          className="ml-4 text-red-500 hover:underline text-sm"
+                        >
+                          Delete
+                        </button>
+                      )}
+                  </div>
                 </li>
               ))}
           </ul>
@@ -277,3 +272,4 @@ const PostDetails = () => {
 };
 
 export default PostDetails;
+                     

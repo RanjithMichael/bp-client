@@ -1,5 +1,5 @@
-
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import PostCard from "../components/PostCard";
 import { getPaginated } from "../api/axiosConfig.js";
 
@@ -13,6 +13,8 @@ const Home = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 6;
+
+  const navigate = useNavigate();
 
   const fetchPosts = useCallback(
     async (reset = false) => {
@@ -79,11 +81,13 @@ const Home = () => {
     fetchPosts(true);
   }, []);
 
+  // UI STATES 
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-900">
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
-        <p className="ml-4 text-gray-200 text-lg">Loading posts...</p>
+        <p className="mt-4 text-gray-200 text-lg">Loading posts...</p>
       </div>
     );
   }
@@ -98,7 +102,7 @@ const Home = () => {
             setPage(1);
             fetchPosts(true);
           }}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
         >
           Retry
         </button>
@@ -107,7 +111,7 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 relative">
+    <div className="min-h-screen bg-gray-900">
       <div className="container mx-auto px-4 py-10">
         {/* Search */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
@@ -152,11 +156,21 @@ const Home = () => {
             )}
           </>
         ) : (
-          <p className="text-center text-gray-300 mt-16 text-xl">
-            {search
-              ? `No posts found for "${search}". Try a different keyword.`
-              : "No posts available yet. Be the first to create one!"}
-          </p>
+          <div className="flex flex-col items-center justify-center mt-16 text-center">
+            <p className="text-gray-300 text-xl mb-6">
+              {search
+                ? `No posts found for "${search}". Try a different keyword.`
+                : "No posts available yet."}
+            </p>
+            {!search && (
+              <button
+                onClick={() => navigate("/create-post")}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md"
+              >
+                Create Your First Post
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
