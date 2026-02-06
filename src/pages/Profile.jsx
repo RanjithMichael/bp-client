@@ -22,7 +22,7 @@ const Profile = () => {
     name: "",
     bio: "",
     profilePic: "",
-    social: {
+    socialLinks: {
       website: "",
       twitter: "",
       linkedin: "",
@@ -44,15 +44,15 @@ const Profile = () => {
         setLoading(true);
         setError(null);
 
-        // Profile
-        const data = await get("/users/profile");
-        setProfile(data);
+        // ✅ Backend returns { user }
+        const res = await get("/users/profile");
+        setProfile(res.user);
 
         setFormData({
-          name: data.name || "",
-          bio: data.bio || "",
-          profilePic: data.profilePic || "",
-          social: data.social || {
+          name: res.user.name || "",
+          bio: res.user.bio || "",
+          profilePic: res.user.profilePic || "",
+          socialLinks: res.user.socialLinks || {
             website: "",
             twitter: "",
             linkedin: "",
@@ -60,9 +60,9 @@ const Profile = () => {
           },
         });
 
-        // Posts
+        // ✅ Backend returns { posts }
         const userPosts = await getUserPosts();
-        setPosts(userPosts || []);
+        setPosts(userPosts.posts || []);
       } catch (err) {
         console.error("Error fetching profile:", err);
         if (err.response?.status === 401) {
@@ -86,19 +86,20 @@ const Profile = () => {
     if (["website", "twitter", "linkedin", "github"].includes(name)) {
       setFormData((prev) => ({
         ...prev,
-        social: { ...prev.social, [name]: value },
+        socialLinks: { ...prev.socialLinks, [name]: value },
       }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // Update profile
+  // ✅ Update profile
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const updated = await put("/users/profile", formData);
-      setProfile(updated);
+      // ✅ Backend returns { user }
+      const updatedRes = await put("/users/profile", formData);
+      setProfile(updatedRes.user);
       setEditing(false);
       setSuccessMsg("✅ Profile updated successfully!");
       setTimeout(() => setSuccessMsg(""), 3000);
@@ -166,7 +167,7 @@ const Profile = () => {
                   <input
                     key={field}
                     name={field}
-                    value={formData.social[field]}
+                    value={formData.socialLinks[field]}
                     onChange={handleChange}
                     placeholder={field}
                     className="w-full border p-2 rounded"
@@ -208,9 +209,9 @@ const Profile = () => {
                 className="w-32 h-32 rounded-full mt-3 object-cover"
               />
 
-              {profile.social && (
+              {profile.socialLinks && (
                 <div className="flex gap-4 mt-3 flex-wrap">
-                  {Object.entries(profile.social).map(
+                  {Object.entries(profile.socialLinks).map(
                     ([key, value]) =>
                       value && (
                         <a

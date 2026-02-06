@@ -26,7 +26,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const res = await API.post("api/auth/register", form);
+      const res = await API.post("/auth/register", form);
 
       // ✅ Automatically log the user in after registration
       login(res.data.user, res.data.token);

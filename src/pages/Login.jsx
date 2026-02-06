@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import API from "../api/axiosConfig";
+import API from "../api/axiosConfig"; // using raw Axios instance
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -18,7 +18,11 @@ const Login = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await API.post("api/auth/login", form);
+
+      // ✅ Correct endpoint and payload
+      const res = await API.post("/auth/login", formData);
+
+      // ✅ Backend returns { success, token, user }
       login(res.data.user, res.data.token);
       navigate("/");
     } catch (err) {
@@ -32,9 +36,7 @@ const Login = () => {
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{
-        backgroundImage: "url('/images/london-eye-england.webp')",
-      }}
+      style={{ backgroundImage: "url('/images/london-eye-england.webp')" }}
     >
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60"></div>
@@ -99,6 +101,3 @@ const Login = () => {
 };
 
 export default Login;
-
-
-
