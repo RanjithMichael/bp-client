@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
-import ReactQuill from "react-quill"; 
+import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 const CreatePost = () => {
@@ -14,18 +14,20 @@ const CreatePost = () => {
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState("");
   const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
 
-  // ✅ Cleanup for image preview to avoid memory leaks
+  // ✅ Cleanup preview URL to avoid memory leaks
   useEffect(() => {
     if (!image) return;
     const objectUrl = URL.createObjectURL(image);
+    setPreview(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [image]);
 
-  // Validation
+  // ✅ Validation
   const validate = () => {
     const newErrors = {};
     if (!title || title.trim().length < 5) {
@@ -41,7 +43,7 @@ const CreatePost = () => {
     return newErrors;
   };
 
-  // Upload image helper
+  // ✅ Upload image helper
   const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
@@ -51,7 +53,7 @@ const CreatePost = () => {
     return res.data.imageUrl;
   };
 
-  // Handle Submit
+  // ✅ Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -79,12 +81,11 @@ const CreatePost = () => {
         category,
         tags: tags
           .split(",")
-          .map((tag) => tag.trim().toLowerCase()) // ✅ normalize tags
+          .map((tag) => tag.trim().toLowerCase())
           .filter(Boolean),
         image: imageUrl,
       });
 
-      // ✅ Success feedback before redirect
       alert("✅ Post created successfully!");
       navigate("/");
     } catch (err) {
@@ -117,7 +118,6 @@ const CreatePost = () => {
           <label className="block mb-1 text-sm font-medium text-gray-700">Title</label>
           <input
             type="text"
-            aria-label="Post title"
             placeholder="Enter a catchy title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -133,9 +133,8 @@ const CreatePost = () => {
           <ReactQuill
             value={content}
             onChange={setContent}
-            aria-label="Post content editor"
-            className="bg-white"
             readOnly={loading}
+            className="bg-white"
           />
           {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content}</p>}
         </div>
@@ -145,7 +144,6 @@ const CreatePost = () => {
           <label className="block mb-1 text-sm font-medium text-gray-700">Category</label>
           <input
             type="text"
-            aria-label="Post category"
             placeholder="e.g. Technology, Lifestyle"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -160,7 +158,6 @@ const CreatePost = () => {
           <label className="block mb-1 text-sm font-medium text-gray-700">Tags</label>
           <input
             type="text"
-            aria-label="Post tags"
             placeholder="e.g. react, tailwind, node (comma separated)"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
@@ -175,14 +172,13 @@ const CreatePost = () => {
           <input
             type="file"
             accept="image/*"
-            aria-label="Upload image"
             onChange={(e) => setImage(e.target.files[0])}
             disabled={loading}
             className="w-full border border-gray-300 p-3 rounded-lg"
           />
-          {image && (
+          {preview && (
             <img
-              src={URL.createObjectURL(image)}
+              src={preview}
               alt="Preview"
               className="mt-2 w-32 h-32 object-cover rounded"
             />
@@ -192,7 +188,6 @@ const CreatePost = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          aria-label="Submit post"
           disabled={loading}
           className="bg-brand-blue text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-light transition disabled:opacity-50"
         >

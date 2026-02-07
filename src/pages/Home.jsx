@@ -81,8 +81,16 @@ const Home = () => {
     fetchPosts(true);
   }, []);
 
-  // UI STATES 
+  // ✅ Update likes/unlikes in parent state
+  const handleLikeUpdate = (postId, likesCount, liked) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p._id === postId ? { ...p, likes: Array(likesCount).fill("dummy"), liked } : p
+      )
+    );
+  };
 
+  // UI STATES
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-900">
@@ -130,7 +138,11 @@ const Home = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {posts.map((post) => (
-                <PostCard key={post._id} post={post} />
+                <PostCard
+                  key={post._id}
+                  post={post}
+                  onLikeUpdate={handleLikeUpdate} // ✅ pass handler
+                />
               ))}
             </div>
 

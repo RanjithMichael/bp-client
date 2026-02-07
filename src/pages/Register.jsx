@@ -1,8 +1,7 @@
 import { useState, useContext } from "react";
-import API from "../api/axiosConfig";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { toast } from "react-toastify";
+import { register as registerService } from "../services/authService"; // ✅ import service
 
 const Register = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -18,25 +17,27 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-
     setLoading(true);
+    setError("");
+
     try {
-      const res = await API.post("/auth/register", form);
+      // ✅ Use authService instead of raw Axios
+      const data = await registerService(form);
 
-      // ✅ Automatically log the user in after registration
-      login(res.data.user, res.data.token);
+      if (data.success) {
+        console.log("Registration success:", data.message);
+        localStorage.setItem("token", data.token);
 
-      toast.success("Account created successfully!");
-      navigate("/"); // redirect to homepage
+        // Update context
+        login(data.user);
+
+        // Navigate to dashboard or home
+        navigate("/dashboard");
+      } else {
+        setError(data.message);
+      }
     } catch (err) {
-      console.error("❌ Registration error:", err.response || err.message);
-      setError(err.response?.data?.message || "Registration failed");
-      toast.error(err.response?.data?.message || "Registration failed");
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -46,13 +47,11 @@ const Register = () => {
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
       style={{
-        backgroundImage: "url('/images/images.jfif')", // Put your image in public/images
+        backgroundImage: "url('/images/images.jfif')",
       }}
     >
-      {/* Dark overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60"></div>
 
-      {/* Register Form */}
       <form
         onSubmit={handleSubmit}
         className="relative z-10 bg-white bg-opacity-90 p-8 rounded-2xl shadow-xl w-full max-w-md"
@@ -115,7 +114,6 @@ const Register = () => {
           )}
         </button>
 
-        {/* Extra link */}
         <p className="text-center text-sm mt-4">
           Already have an account?{" "}
           <Link to="/login" className="text-blue-600 hover:underline">

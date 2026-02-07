@@ -11,7 +11,7 @@ import {
   FaCommentDots,
 } from "react-icons/fa";
 import { useState, useContext } from "react";
-import API from "../api/axiosConfig";
+import { toggleLike } from "../api/axiosConfig"; // ✅ use helper
 import { AuthContext } from "../context/AuthContext";
 
 // Utility to strip HTML tags
@@ -42,7 +42,7 @@ const PostCard = ({ post }) => {
     : "Unknown Date";
 
   const BASE_URL =
-    import.meta.env.VITE_API_URL || "https://bp-server-4.onrender.com/api";
+    import.meta.env.VITE_API_URL || "https://bp-server-8.onrender.com/api";
   const imageUrl =
     !imageError && post.image
       ? post.image.startsWith("http")
@@ -72,12 +72,12 @@ const PostCard = ({ post }) => {
     if (liking) return;
     try {
       setLiking(true);
-      const { data } = await API.patch(`/posts/${post._id}/like`);
-      setLikes(data.likesCount);
-      setLiked(data.liked);
+      const res = await toggleLike(post._id); // ✅ use helper
+      setLikes(res.likes); // backend returns updated count
+      setLiked(res.liked); // backend returns whether user has liked
     } catch (err) {
       console.error("❌ Error liking post:", err);
-      alert("Failed to like post. Please try again.");
+      alert(err.response?.data?.message || "Failed to like post. Please try again.");
     } finally {
       setLiking(false);
     }
@@ -123,21 +123,20 @@ const PostCard = ({ post }) => {
             ))}
           </div>
         )}
-{/* Tags */}
-{post.tags && post.tags.length > 0 && (
-  <div className="flex flex-wrap gap-2 mb-3">
-    {post.tags.map((tag, idx) => (
-      <span
-        key={idx}
-        className="bg-blue-50 text-blue-600 text-xs font-medium px-2 py-1 rounded-full hover:bg-blue-100 cursor-pointer"
-      >
-        #{tag}
-      </span>
-    ))}
-  </div>
-)}
 
-
+        {/* Tags */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {post.tags.map((tag, idx) => (
+              <span
+                key={idx}
+                className="bg-blue-50 text-blue-600 text-xs font-medium px-2 py-1 rounded-full hover:bg-blue-100 cursor-pointer"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="flex justify-between items-end mt-auto">
@@ -220,4 +219,5 @@ const PostCard = ({ post }) => {
     </div>
   );
 };
+
 export default PostCard;

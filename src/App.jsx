@@ -18,6 +18,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AuthorPage from "./pages/AuthorPage";
 import Analytics from "./pages/Analytics";
+import Dashboard from "./pages/Dashboard"; 
 
 function App() {
   return (
@@ -68,6 +69,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard /> {/* ✅ new route */}
                   </ProtectedRoute>
                 }
               />

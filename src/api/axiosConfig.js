@@ -1,7 +1,8 @@
 import axios from "axios";
 
-// Base URL: use env or fallback to relative /api
-const BASE_URL = import.meta.env.VITE_API_URL || "https://bp-server-8.onrender.com/api";
+// Base URL: use env or fallback to deployed API
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "https://bp-server-8.onrender.com/api";
 
 const API = axios.create({
   baseURL: BASE_URL,
@@ -38,10 +39,15 @@ API.interceptors.response.use(
     }
 
     // Retry GET requests once on timeout/network issue
-    if ((!error.response || error.code === "ECONNABORTED") && !originalRequest._retry) {
+    if (
+      (!error.response || error.code === "ECONNABORTED") &&
+      !originalRequest._retry
+    ) {
       if (originalRequest.method === "get") {
         originalRequest._retry = true;
-        console.warn("🔁 Retrying GET request due to timeout or network issue...");
+        console.warn(
+          "🔁 Retrying GET request due to timeout or network issue..."
+        );
         return API(originalRequest);
       }
     }
@@ -56,7 +62,7 @@ API.interceptors.response.use(
   }
 );
 
-// Helpers
+// Helpers 
 export const getPaginated = async (url, page = 1, limit = 10, search = "") => {
   const params = new URLSearchParams({ page, limit, ...(search && { search }) });
   const { data } = await API.get(`${url}?${params.toString()}`);
@@ -89,6 +95,12 @@ export const upload = async (url, formData) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return data;
+};
+
+// ✅ Like / Unlike helper
+export const toggleLike = async (postId) => {
+  const { data } = await API.post(`/posts/${postId}/like`);
+  return data; // { success, likes }
 };
 
 export default API;

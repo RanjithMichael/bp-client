@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
-import API from "../api/axiosConfig"; // using raw Axios instance
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import { login as loginService } from "../services/authService"; // ✅ import from authService
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -15,19 +15,27 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+
     try {
-      setLoading(true);
-      setError("");
+      // ✅ Use authService instead of raw Axios
+      const data = await loginService(form);
 
-      // ✅ Correct endpoint and payload
-      const res = await API.post("/auth/login", formData);
+      if (data.success) {
+        console.log("Login success:", data.message);
+        localStorage.setItem("token", data.token);
 
-      // ✅ Backend returns { success, token, user }
-      login(res.data.user, res.data.token);
-      navigate("/");
+        // Update context
+        login(data.user);
+
+        // Navigate to dashboard or home
+        navigate("/dashboard");
+      } else {
+        setError(data.message);
+      }
     } catch (err) {
-      console.error("Login error:", err);
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -38,10 +46,8 @@ const Login = () => {
       className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
       style={{ backgroundImage: "url('/images/london-eye-england.webp')" }}
     >
-      {/* Dark overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60"></div>
 
-      {/* Login form */}
       <form
         onSubmit={handleSubmit}
         className="relative z-10 bg-white bg-opacity-90 p-8 rounded-2xl shadow-xl w-full max-w-md"
@@ -86,7 +92,6 @@ const Login = () => {
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        {/* Extra links */}
         <div className="flex justify-between mt-4 text-sm">
           <Link to="/forgot-password" className="text-blue-600 hover:underline">
             Forgot Password?
