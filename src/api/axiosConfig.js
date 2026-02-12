@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Base URL: use env or fallback to deployed API
 const BASE_URL =
   import.meta.env.VITE_API_URL || "https://bp-server-8.onrender.com/api";
 
@@ -8,7 +7,21 @@ const API = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 15000,
+  withCredentials: true, // ✅ send cookies (refreshToken)
 });
+
+// Flag to avoid multiple refresh calls at once
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+const onRefreshed = (newToken) => {
+  refreshSubscribers.forEach((cb) => cb(newToken));
+  refreshSubscribers = [];
+};
+
+const subscribeTokenRefresh = (cb) => {
+  refreshSubscribers.push(cb);
+};
 
 // REQUEST INTERCEPTOR
 API.interceptors.request.use(
@@ -28,14 +41,37 @@ API.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 Unauthorized
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+    // Handle expired access token (401)
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
 
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const { data } = await API.post("/auth/refresh"); // backend refresh endpoint
+          const newToken = data.accessToken;
+
+          localStorage.setItem("token", newToken);
+          API.defaults.headers.Authorization = `Bearer ${newToken}`;
+          isRefreshing = false;
+          onRefreshed(newToken);
+        } catch (err) {
+          isRefreshing = false;
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
+          }
+          return Promise.reject(err);
+        }
       }
+
+      return new Promise((resolve) => {
+        subscribeTokenRefresh((newToken) => {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          resolve(API(originalRequest));
+        });
+      });
     }
 
     // Retry GET requests once on timeout/network issue
@@ -45,9 +81,7 @@ API.interceptors.response.use(
     ) {
       if (originalRequest.method === "get") {
         originalRequest._retry = true;
-        console.warn(
-          "🔁 Retrying GET request due to timeout or network issue..."
-        );
+        console.warn("🔁 Retrying GET request due to timeout or network issue...");
         return API(originalRequest);
       }
     }
@@ -89,7 +123,6 @@ export const remove = async (url) => {
   return data;
 };
 
-// Upload helper for images/files
 export const upload = async (url, formData) => {
   const { data } = await API.post(url, formData, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -97,15 +130,12 @@ export const upload = async (url, formData) => {
   return data;
 };
 
-// ✅ Like / Unlike helper
 export const toggleLike = async (postId) => {
   try {
     const { data } = await API.post(`/posts/${postId}/like`);
-    return data; // backend should return { likes, liked }
+    return data;
   } catch (err) {
-    throw new Error(
-      err.response?.data?.message || "Failed to toggle like"
-    );
+    throw new Error(err.response?.data?.message || "Failed to toggle like");
   }
 };
 

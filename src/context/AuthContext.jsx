@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import API from "../api/axiosConfig";
 
 export const AuthContext = createContext();
@@ -7,13 +7,42 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Refresh user from backend using token
+  const refreshUser = useCallback(async (token) => {
+    if (!token) {
+      logout();
+      return;
+    }
+
+    try {
+      const { data } = await API.get("/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const freshUser = data.user || data;
+      localStorage.setItem("user", JSON.stringify(freshUser));
+      setUser(freshUser);
+    } catch (err) {
+      console.error("Failed to refresh user:", err);
+      logout();
+    }
+  }, []);
+
+  // Initial load: check localStorage for user + token
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-    setLoading(false);
-  }, []);
+
+    if (token) {
+      refreshUser(token); // validate token with backend
+    } else {
+      setLoading(false);
+    }
+  }, [refreshUser]);
 
   const login = (userData, token) => {
     localStorage.setItem("user", JSON.stringify(userData));
@@ -27,18 +56,6 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const refreshUser = async () => {
-    try {
-      const { data } = await API.get("/auth/me");
-      const freshUser = data.user || data;
-      localStorage.setItem("user", JSON.stringify(freshUser));
-      setUser(freshUser);
-    } catch (err) {
-      console.error("Failed to refresh user:", err);
-      logout();
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -49,7 +66,9 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, refreshUser, loading }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, refreshUser, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
