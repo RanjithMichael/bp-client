@@ -11,7 +11,7 @@ import {
   FaCommentDots,
 } from "react-icons/fa";
 import { useState, useContext } from "react";
-import { toggleLike } from "../api/axiosConfig.js"; 
+import { toggleLike } from "../api/posts.js"; 
 import { AuthContext } from "../context/AuthContext";
 
 // Utility to strip HTML tags
@@ -72,7 +72,7 @@ const PostCard = ({ post }) => {
     if (liking) return;
     try {
       setLiking(true);
-      const res = await toggleLike(post._id); // ✅ updated helper
+      const res = await toggleLike(post._id); 
       setLikes(res.likes);
       setLiked(res.liked);
     } catch (err) {

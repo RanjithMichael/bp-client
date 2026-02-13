@@ -5,6 +5,15 @@ import { AuthContext } from "../context/AuthContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
+const categories = [
+  "Technology",
+  "Lifestyle",
+  "Education",
+  "Finance",
+  "Travel",
+  "Health",
+];
+
 const CreatePost = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -12,14 +21,19 @@ const CreatePost = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
-  const [tags, setTags] = useState("");
+
+  // ✅ tags as array instead of string
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
 
-  // ✅ Cleanup preview URL to avoid memory leaks
+  // IMAGE PREVIEW
+  
   useEffect(() => {
     if (!image) return;
     const objectUrl = URL.createObjectURL(image);
@@ -27,33 +41,65 @@ const CreatePost = () => {
     return () => URL.revokeObjectURL(objectUrl);
   }, [image]);
 
-  // ✅ Validation
+  // TAG HANDLING
+ 
+  const handleAddTag = (e) => {
+    if (e.key === "Enter" && tagInput.trim()) {
+      e.preventDefault();
+
+      const newTag = tagInput.trim().toLowerCase();
+      if (!tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (index) => {
+    setTags(tags.filter((_, i) => i !== index));
+  };
+
+  // VALIDATION
+  
   const validate = () => {
     const newErrors = {};
+
     if (!title || title.trim().length < 5) {
       newErrors.title = "Title must be at least 5 characters.";
     }
-    const plainContent = content.replace(/<[^>]+>/g, "").replace(/\s+/g, "").trim();
+
+    const plainContent = content
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, "")
+      .trim();
+
     if (!plainContent || plainContent.length < 20) {
       newErrors.content = "Content must be at least 20 characters.";
     }
-    if (!category || category.trim() === "") {
+
+    if (!category) {
       newErrors.category = "Category is required.";
     }
+
     return newErrors;
   };
 
-  // ✅ Upload image helper
+  // IMAGE UPLOAD
+  
   const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
+
     const res = await API.post("/upload", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+
     return res.data.imageUrl;
   };
 
-  // ✅ Handle Submit
+  // SUBMIT
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -69,8 +115,10 @@ const CreatePost = () => {
     }
 
     setLoading(true);
+
     try {
       let imageUrl = null;
+
       if (image) {
         imageUrl = await uploadImage(image);
       }
@@ -79,32 +127,28 @@ const CreatePost = () => {
         title,
         content,
         category,
-        tags: tags
-          .split(",")
-          .map((tag) => tag.trim().toLowerCase())
-          .filter(Boolean),
+        tags,
         image: imageUrl,
       });
 
       alert("✅ Post created successfully!");
       navigate("/");
     } catch (err) {
-      console.error("Post creation failed:", err);
-      setErrors({ api: err.response?.data?.message || "Post creation failed" });
+      setErrors({
+        api: err.response?.data?.message || "Post creation failed",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // UI
+  
   return (
-    <div className="max-w-3xl mx-auto mt-12 p-6 bg-white shadow-lg rounded-xl font-inter">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">📝 New Post</h1>
-
-      {loginMessage && (
-        <div className="mb-4 p-3 rounded bg-yellow-100 text-yellow-700 text-sm">
-          {loginMessage}
-        </div>
-      )}
+    <div className="max-w-3xl mx-auto mt-12 p-8 bg-white shadow-xl rounded-2xl">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">
+        ✍️ Create New Post
+      </h1>
 
       {errors.api && (
         <div className="mb-4 p-3 rounded bg-red-100 text-red-700 text-sm">
@@ -113,85 +157,104 @@ const CreatePost = () => {
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {/* Title */}
+        {/* TITLE */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Title</label>
+          <label className="block mb-2 font-medium">Title</label>
           <input
             type="text"
             placeholder="Enter a catchy title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={loading}
-            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
+            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
-          {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+          {errors.title && (
+            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+          )}
         </div>
 
-        {/* Content */}
+        {/* CONTENT */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Content</label>
-          <ReactQuill
-            value={content}
-            onChange={setContent}
-            readOnly={loading}
-            className="bg-white"
-          />
-          {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content}</p>}
+          <label className="block mb-2 font-medium">Content</label>
+          <ReactQuill value={content} onChange={setContent} />
+          {errors.content && (
+            <p className="text-red-500 text-sm mt-1">{errors.content}</p>
+          )}
         </div>
 
-        {/* Category */}
+        {/* CATEGORY */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Category</label>
-          <input
-            type="text"
-            placeholder="e.g. Technology, Lifestyle"
+          <label className="block mb-2 font-medium">Category</label>
+          <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            disabled={loading}
-            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-          />
-          {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
+            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="">Select category</option>
+            {categories.map((cat) => (
+              <option key={cat}>{cat}</option>
+            ))}
+          </select>
+
+          {errors.category && (
+            <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+          )}
         </div>
 
-        {/* Tags */}
+        {/* TAGS */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Tags</label>
+          <label className="block mb-2 font-medium">
+            Tags (Press Enter to add)
+          </label>
+
           <input
             type="text"
-            placeholder="e.g. react, tailwind, node (comma separated)"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            disabled={loading}
-            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
+            placeholder="react, node, mongodb..."
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleAddTag}
+            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
+
+          <div className="flex flex-wrap gap-2 mt-3">
+            {tags.map((tag, index) => (
+              <span
+                key={index}
+                onClick={() => removeTag(index)}
+                className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-blue-600"
+              >
+                {tag} ✕
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* Image Upload */}
+        {/* IMAGE */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Image</label>
+          <label className="block mb-2 font-medium">Image</label>
           <input
             type="file"
             accept="image/*"
             onChange={(e) => setImage(e.target.files[0])}
-            disabled={loading}
-            className="w-full border border-gray-300 p-3 rounded-lg"
+            className="w-full border p-3 rounded-lg"
           />
+
           {preview && (
             <img
               src={preview}
               alt="Preview"
-              className="mt-2 w-32 h-32 object-cover rounded"
+              className="mt-3 w-32 h-32 object-cover rounded"
             />
           )}
         </div>
 
-        {/* Submit Button */}
+        {/* SUBMIT */}
         <button
           type="submit"
           disabled={loading}
-          className="bg-brand-blue text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-light transition disabled:opacity-50"
+          className="bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
         >
-          {loading ? "Creating..." : "Create Post"}
+          {loading ? "Creating..." : "Publish Post"}
         </button>
       </form>
     </div>
@@ -199,4 +262,3 @@ const CreatePost = () => {
 };
 
 export default CreatePost;
-  

@@ -4,13 +4,22 @@ import API from "../api/axiosConfig";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user")) || null
+  );
+
   const [loading, setLoading] = useState(true);
 
-  // Refresh user from backend using token
+  const logout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+  };
+
+  // Refresh user from backend
   const refreshUser = useCallback(async (token) => {
     if (!token) {
       logout();
+      setLoading(false);
       return;
     }
 
@@ -19,41 +28,36 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const freshUser = data.user || data;
+      const freshUser = {
+        ...(data.user || data),
+        token,
+      };
+
       localStorage.setItem("user", JSON.stringify(freshUser));
       setUser(freshUser);
     } catch (err) {
       console.error("Failed to refresh user:", err);
       logout();
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Initial load: check localStorage for user + token
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
+    const storedUser = JSON.parse(localStorage.getItem("user"));
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-
-    if (token) {
-      refreshUser(token); // validate token with backend
+    if (storedUser?.token) {
+      refreshUser(storedUser.token);
     } else {
       setLoading(false);
     }
   }, [refreshUser]);
 
   const login = (userData, token) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", token);
-    setUser(userData);
-  };
+    const userWithToken = { ...userData, token };
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setUser(null);
+    localStorage.setItem("user", JSON.stringify(userWithToken));
+    setUser(userWithToken);
   };
 
   if (loading) {
@@ -73,3 +77,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+

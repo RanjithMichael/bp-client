@@ -1,23 +1,11 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children, roles }) {
-  const { user, loading, refreshUser } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
 
-  // On mount, try to refresh user from localStorage token if not already loaded
-  useEffect(() => {
-    if (!user) {
-      const token = localStorage.getItem("token");
-      if (token) {
-        refreshUser(token); // Ensure AuthContext rehydrates user from token
-      }
-    }
-    // run only once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Show loader while checking auth
+  // Show loader while auth is being checked
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -32,7 +20,7 @@ export default function ProtectedRoute({ children, roles }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Optional: role-based restriction
+  // Optional role-based restriction
   if (roles && !roles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
