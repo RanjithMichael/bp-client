@@ -1,16 +1,19 @@
 import axios from "axios";
 
 const BASE_URL =
-  import.meta.env.VITE_API_URL || "https://bp-server-8.onrender.com/api";
+  import.meta.env.VITE_API_URL ||
+  "https://bp-server-8.onrender.com/api";
 
 const API = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 15000,
+  timeout: 30000, // increased for Render cold start
   withCredentials: true,
 });
 
-// Prevent multiple refresh calls
+
+// TOKEN REFRESH CONTROL
+
 let isRefreshing = false;
 let refreshSubscribers = [];
 
@@ -25,12 +28,13 @@ const subscribeTokenRefresh = (cb) => {
 
 // REQUEST INTERCEPTOR
 
+
 API.interceptors.request.use(
   (config) => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
 
-    if (user?.token) {
-      config.headers.Authorization = `Bearer ${user.token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
@@ -45,7 +49,17 @@ API.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // If no response (server down / timeout)
+    if (!error.response) {
+      console.warn("Network/Server error:", error.message);
+      return Promise.reject(error);
+    }
+
+    // Handle 401
+    if (
+      error.response.status === 401 &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
 
       if (!isRefreshing) {
@@ -53,26 +67,30 @@ API.interceptors.response.use(
 
         try {
           const { data } = await API.post("/auth/refresh");
+
           const newToken = data.accessToken;
 
-          const user = JSON.parse(localStorage.getItem("user"));
-          if (user) {
-            localStorage.setItem(
-              "user",
-              JSON.stringify({ ...user, token: newToken })
-            );
-          }
+          // Save new token
+          localStorage.setItem("token", newToken);
 
+          // Update default header
           API.defaults.headers.common.Authorization =
             `Bearer ${newToken}`;
 
           isRefreshing = false;
           onRefreshed(newToken);
-        } catch (err) {
+        } catch (refreshError) {
           isRefreshing = false;
-          localStorage.removeItem("user");
-          window.location.href = "/login";
-          return Promise.reject(err);
+
+          console.warn("Token refresh failed.");
+
+          // Only clear if refresh explicitly invalid
+          if (refreshError.response?.status === 401) {
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+          }
+
+          return Promise.reject(refreshError);
         }
       }
 

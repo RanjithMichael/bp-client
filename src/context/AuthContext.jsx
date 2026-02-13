@@ -4,19 +4,24 @@ import API from "../api/axiosConfig";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+
   const [user, setUser] = useState(
     JSON.parse(localStorage.getItem("user")) || null
   );
 
   const [loading, setLoading] = useState(true);
 
+  // LOGOUT
   const logout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setUser(null);
   };
 
-  // Refresh user from backend
-  const refreshUser = useCallback(async (token) => {
+  // REFRESH USER FROM BACKEND
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem("token");
+
     if (!token) {
       logout();
       setLoading(false);
@@ -24,17 +29,10 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const { data } = await API.get("/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const data = await API.get("/auth/me");
 
-      const freshUser = {
-        ...(data.user || data),
-        token,
-      };
-
-      localStorage.setItem("user", JSON.stringify(freshUser));
-      setUser(freshUser);
+      localStorage.setItem("user", JSON.stringify(data.user || data));
+      setUser(data.user || data);
     } catch (err) {
       console.error("Failed to refresh user:", err);
       logout();
@@ -43,21 +41,16 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // INITIAL LOAD
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-
-    if (storedUser?.token) {
-      refreshUser(storedUser.token);
-    } else {
-      setLoading(false);
-    }
+    refreshUser();
   }, [refreshUser]);
 
+  // LOGIN
   const login = (userData, token) => {
-    const userWithToken = { ...userData, token };
-
-    localStorage.setItem("user", JSON.stringify(userWithToken));
-    setUser(userWithToken);
+    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("token", token);
+    setUser(userData);
   };
 
   if (loading) {
@@ -70,11 +63,8 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider
-      value={{ user, login, logout, refreshUser, loading }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
-

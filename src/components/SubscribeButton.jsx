@@ -6,38 +6,59 @@ export default function SubscribeButton({ authorId }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch subscription status
+  // Fetch subscription status on mount
   useEffect(() => {
     const fetchStatus = async () => {
+      if (!authorId) return; // avoid undefined ID
+      const token = localStorage.getItem("token");
+      if (!token) return; // skip if not logged in
+
       try {
-        const res = await API.get(`/subscriptions/status/${authorId}`);
-        setSubscribed(res.data.subscribed ?? false);
+        const res = await API.get(`/subscribe/status/${authorId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSubscribed(res?.data?.subscribed ?? false);
       } catch (err) {
-        console.error("Error fetching subscription status:", err);
-        setError("Failed to load subscription status.");
+        // ignore 401 (not logged in)
+        if (err.response?.status !== 401) {
+          console.error("Error fetching subscription status:", err);
+          setError("Failed to load subscription status.");
+        }
       }
     };
-    if (authorId) fetchStatus();
+
+    fetchStatus();
   }, [authorId]);
 
   // Toggle subscription
   const toggleSubscription = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    if (!authorId) return;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
 
+    setLoading(true);
+    setError(null);
+
+    try {
       let res;
       if (subscribed) {
-        res = await API.delete(`/subscriptions/${authorId}`);
+        // Unsubscribe
+        res = await API.delete(`/unsubscribe/${authorId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
-        res = await API.post(`/subscriptions/${authorId}`);
+        // Subscribe
+        res = await API.post(
+          `/subscribe/${authorId}`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
       }
 
-      if (res.data.subscribed !== undefined) {
-        setSubscribed(res.data.subscribed);
-      } else {
-        setSubscribed(!subscribed);
-      }
+      setSubscribed(res?.data?.subscribed ?? !subscribed);
     } catch (err) {
       console.error("Error toggling subscription:", err);
       setError("Failed to update subscription. Please try again.");
@@ -53,21 +74,15 @@ export default function SubscribeButton({ authorId }) {
         disabled={loading}
         aria-label={subscribed ? "Unsubscribe from author" : "Subscribe to author"}
         className={`px-4 py-2 rounded font-semibold text-white transition ${
-          subscribed
-            ? "bg-red-500 hover:bg-red-600"
-            : "bg-green-500 hover:bg-green-600"
+          subscribed ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
         } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
       >
-        {loading
-          ? subscribed
-            ? "Unsubscribing..."
-            : "Subscribing..."
-          : subscribed
-          ? "Unsubscribe"
-          : "Subscribe"}
+        {loading ? (subscribed ? "Unsubscribing..." : "Subscribing...") : subscribed ? "Unsubscribe" : "Subscribe"}
       </button>
 
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
     </div>
   );
 }
+
+
