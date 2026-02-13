@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import API from "../api/axiosConfig";
@@ -21,11 +22,11 @@ const PostDetails = () => {
 
   const BASE_URL = import.meta.env.VITE_API_URL || "https://bp-server-8.onrender.com/api";
 
-  // FETCH POST
+  // Fetch post
   useEffect(() => {
-    const fetchPost = async () => {
-      if (!slug || authLoading) return;
+    if (!slug || authLoading) return;
 
+    const fetchPost = async () => {
       try {
         setLoading(true);
         setError(null);
@@ -34,10 +35,11 @@ const PostDetails = () => {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const { data } = await API.get(`/posts/slug/${slug}`, { headers });
-        const fetchedPost = data.post;
+        const fetchedPost = data?.post;
 
         if (!fetchedPost) {
           setError("Post not found.");
+          setLoading(false);
           return;
         }
 
@@ -61,7 +63,7 @@ const PostDetails = () => {
     fetchPost();
   }, [slug, user, authLoading]);
 
-  // LIKE
+  // Like/unlike
   const toggleLike = async () => {
     if (!user || !post) {
       toast.info("Please login to like this post.");
@@ -85,10 +87,9 @@ const PostDetails = () => {
     }
   };
 
-  // SHARE
+  // Share
   const handleShare = async () => {
     if (!post) return;
-
     try {
       const shareUrl = `${window.location.origin}/post/${post.slug}`;
       await navigator.clipboard.writeText(shareUrl);
@@ -99,7 +100,7 @@ const PostDetails = () => {
     }
   };
 
-  // COMMENTS
+  // Add comment
   const addComment = async (e) => {
     e.preventDefault();
     const text = e.target.comment?.value;
@@ -119,6 +120,7 @@ const PostDetails = () => {
     }
   };
 
+  // Delete comment
   const deleteComment = async (id) => {
     if (!post) return;
 
@@ -161,7 +163,7 @@ const PostDetails = () => {
         >
           {post?.author?.name || "Unknown Author"}
         </Link>{" "}
-        • {new Date(post.createdAt).toLocaleDateString()}
+        • {new Date(post?.createdAt).toLocaleDateString()}
       </p>
 
       <div
@@ -197,11 +199,11 @@ const PostDetails = () => {
         </button>
       </div>
 
-      {/* ANALYTICS */}
+      {/* Analytics */}
       {post?._id && <AnalyticsChart postId={post._id} />}
 
-      {/* COMMENTS SECTION */}
-      {/* Your existing comments JSX here */}
+      {/* Comments Section */}
+      {/* Add your comments JSX here */}
     </div>
   );
 };
