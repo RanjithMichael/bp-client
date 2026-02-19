@@ -14,7 +14,7 @@ export default function SubscribeButton({ authorId }) {
       if (!token) return; // skip if not logged in
 
       try {
-        const res = await API.get(`/subscribe/status/${authorId}`, {
+        const res = await API.get(`/api/subscribe/status/${authorId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setSubscribed(res?.data?.subscribed ?? false);
