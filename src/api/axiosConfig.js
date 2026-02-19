@@ -1,16 +1,14 @@
 import axios from "axios";
 
 const BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  "https://bp-server-9.onrender.com/api"
+  import.meta.env.VITE_API_URL || "https://bp-server-9.onrender.com/api";
 
 const API = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 30000, // increased for Render cold start
-  withCredentials: true,
+  withCredentials: true, // ✅ ensures cookies (refreshToken) are sent
 });
-
 
 // TOKEN REFRESH CONTROL
 
@@ -28,15 +26,12 @@ const subscribeTokenRefresh = (cb) => {
 
 // REQUEST INTERCEPTOR
 
-
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
   (error) => Promise.reject(error)
@@ -55,49 +50,43 @@ API.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Handle 401
-    if (
-      error.response.status === 401 &&
-      !originalRequest._retry
-    ) {
+    // Handle 401 Unauthorized
+    if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       if (!isRefreshing) {
         isRefreshing = true;
-
         try {
-          const { data } = await API.post("/auth/refresh");
-
+          // ✅ Call refresh endpoint (GET, not POST)
+          const { data } = await API.get("/auth/refresh", { withCredentials: true });
           const newToken = data.accessToken;
 
           // Save new token
           localStorage.setItem("token", newToken);
 
           // Update default header
-          API.defaults.headers.common.Authorization =
-            `Bearer ${newToken}`;
+          API.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
           isRefreshing = false;
           onRefreshed(newToken);
         } catch (refreshError) {
           isRefreshing = false;
+          console.warn("Token refresh failed:", refreshError);
 
-          console.warn("Token refresh failed.");
-
-          // Only clear if refresh explicitly invalid
           if (refreshError.response?.status === 401) {
             localStorage.removeItem("user");
             localStorage.removeItem("token");
+            window.location.href = "/login"; // ✅ force redirect
           }
 
           return Promise.reject(refreshError);
         }
       }
 
+      // Queue requests until refresh completes
       return new Promise((resolve) => {
         subscribeTokenRefresh((newToken) => {
-          originalRequest.headers.Authorization =
-            `Bearer ${newToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
           resolve(API(originalRequest));
         });
       });

@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 export default function ProtectedRoute({ children, roles }) {
   const { user, loading } = useContext(AuthContext);
 
-  // Show loader while auth is being checked
+  // Show loader while auth state is being checked
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -22,8 +22,10 @@ export default function ProtectedRoute({ children, roles }) {
 
   // Optional role-based restriction
   if (roles && !roles.includes(user.role)) {
+    // Redirect unauthorized users to home (or a "Not Authorized" page if you prefer)
     return <Navigate to="/" replace />;
   }
 
+  // Render protected children if authenticated and authorized
   return children;
 }
