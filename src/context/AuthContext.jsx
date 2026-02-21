@@ -4,23 +4,22 @@ import API from "../api/axiosConfig";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-
   const [user, setUser] = useState(
     JSON.parse(localStorage.getItem("user")) || null
   );
-
   const [loading, setLoading] = useState(true);
 
   // LOGOUT
   const logout = () => {
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
     setUser(null);
+    delete API.defaults.headers.common.Authorization;
   };
 
   // REFRESH USER FROM BACKEND
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
 
     if (!token) {
       logout();
@@ -29,10 +28,9 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const data = await API.get("/auth/me");
-
-      localStorage.setItem("user", JSON.stringify(data.user || data));
-      setUser(data.user || data);
+      const { data } = await API.get("/auth/profile"); 
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setUser(data.user);
     } catch (err) {
       console.error("Failed to refresh user:", err);
       logout();
@@ -49,8 +47,9 @@ export const AuthProvider = ({ children }) => {
   // LOGIN
   const login = (userData, token) => {
     localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", token);
+    localStorage.setItem("accessToken", token);
     setUser(userData);
+    API.defaults.headers.common.Authorization = `Bearer ${token}`;
   };
 
   if (loading) {

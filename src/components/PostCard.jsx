@@ -42,7 +42,7 @@ const PostCard = ({ post }) => {
     : "Unknown Date";
 
   const BASE_URL =
-    import.meta.env.VITE_API_URL || "https://bp-server-8.onrender.com/api";
+    import.meta.env.VITE_API_URL || "https://bp-server-9.onrender.com/api";
   const imageUrl =
     !imageError && post.image
       ? post.image.startsWith("http")
@@ -68,20 +68,23 @@ const PostCard = ({ post }) => {
     window.open(shareUrls[platform], "_blank", "noopener,noreferrer");
   };
 
-  const handleLike = async () => {
-    if (liking) return;
-    try {
-      setLiking(true);
-      const res = await toggleLike(post._id); 
-      setLikes(res.likes);
-      setLiked(res.liked);
-    } catch (err) {
-      console.error("❌ Error liking post:", err);
-      alert(err.message || "Failed to like post. Please try again.");
-    } finally {
-      setLiking(false);
-    }
-  };
+  // Like handler
+const handleLike = async () => {
+  if (liking) return; // prevent double clicks
+  try {
+    setLiking(true);
+    const res = await toggleLike(post._id);
+
+    // ✅ Use likesCount from backend response
+    setLikes(res.likesCount);
+    setLiked(res.liked);
+  } catch (err) {
+    console.error("❌ Error liking post:", err);
+    alert(err.message || "Failed to like post. Please try again.");
+  } finally {
+    setLiking(false);
+  }
+};
 
   // Show latest 2 comments
   const latestComments = post?.comments?.slice(-2) || [];

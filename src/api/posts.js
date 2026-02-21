@@ -30,7 +30,7 @@ export const getPaginatedPosts = (page, limit, search = "") =>
 
 // ✅ Toggle like (PATCH in backend)
 export const toggleLike = (id) =>
-  post(`/posts/${id}/like`);
+  put(`/posts/${id}/like`);
 
 // Add comment
 export const addComment = (id, text) =>

@@ -28,7 +28,7 @@ const subscribeTokenRefresh = (cb) => {
 
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -62,7 +62,7 @@ API.interceptors.response.use(
           const newToken = data.accessToken;
 
           // Save new token
-          localStorage.setItem("token", newToken);
+          localStorage.setItem("accessToken", newToken);
 
           // Update default header
           API.defaults.headers.common.Authorization = `Bearer ${newToken}`;
@@ -75,7 +75,7 @@ API.interceptors.response.use(
 
           if (refreshError.response?.status === 401) {
             localStorage.removeItem("user");
-            localStorage.removeItem("token");
+            localStorage.removeItem("accessToken");
             window.location.href = "/login"; // ✅ force redirect
           }
 
