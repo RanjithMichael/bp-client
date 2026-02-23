@@ -11,7 +11,7 @@ import {
   FaCommentDots,
 } from "react-icons/fa";
 import { useState, useContext } from "react";
-import { toggleLike } from "../api/posts.js"; 
+import { toggleLikePost } from "../api/posts.js"; 
 import { AuthContext } from "../context/AuthContext";
 
 // Utility to strip HTML tags
@@ -74,7 +74,7 @@ const PostCard = ({ post }) => {
     if (liking) return; // prevent double clicks
     try {
       setLiking(true);
-      const res = await toggleLike(post._id);
+      const res = await toggleLikePost(post._id);
 
       // ✅ Update state from backend response
       setLikes(res.likesCount);
