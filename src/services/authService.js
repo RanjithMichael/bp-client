@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://bp-server-9.onrender.com/api/auth/";
+const API_URL = "https://bp-server-11.onrender.com/api/auth/";
 
 // ✅ Register
 export const register = async (userData) => {

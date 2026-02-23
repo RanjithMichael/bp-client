@@ -43,7 +43,7 @@ const PostCard = ({ post }) => {
     : "Unknown Date";
 
   const BASE_URL =
-    import.meta.env.VITE_API_URL || "https://bp-server-9.onrender.com/api";
+    import.meta.env.VITE_API_URL || "https://bp-server-11.onrender.com/api";
   const imageUrl =
     !imageError && post.image
       ? post.image.startsWith("http")

@@ -20,7 +20,7 @@ const PostDetails = () => {
   const [liking, setLiking] = useState(false);
 
   const BASE_URL =
-    import.meta.env.VITE_API_URL || "https://bp-server-9.onrender.com/api";
+    import.meta.env.VITE_API_URL || "https://bp-server-11.onrender.com/api";
 
   // Fetch post
   useEffect(() => {
