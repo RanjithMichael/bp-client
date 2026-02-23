@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import API from "../api/axiosConfig";
@@ -20,7 +19,8 @@ const PostDetails = () => {
   const [error, setError] = useState(null);
   const [liking, setLiking] = useState(false);
 
-  const BASE_URL = import.meta.env.VITE_API_URL || "https://bp-server-9.onrender.com/api";
+  const BASE_URL =
+    import.meta.env.VITE_API_URL || "https://bp-server-9.onrender.com/api";
 
   // Fetch post
   useEffect(() => {
@@ -31,10 +31,7 @@ const PostDetails = () => {
         setLoading(true);
         setError(null);
 
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        const { data } = await API.get(`/posts/slug/${slug}`, { headers });
+        const { data } = await API.get(`/posts/slug/${slug}`);
         const fetchedPost = data?.post;
 
         if (!fetchedPost) {
@@ -72,13 +69,14 @@ const PostDetails = () => {
 
     try {
       setLiking(true);
-      const token = localStorage.getItem("token");
-      const { data } = await API.patch(`/posts/${post._id}/like`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setLikes(data.likesCount || likes);
-      setLikedByUser(data.liked);
-      toast.success(data.liked ? "👍 Post liked!" : "👎 Like removed.");
+      const { data } = await API.put(`/posts/${post._id}/like`);
+      setLikes(data.data?.likes?.length || likes);
+      setLikedByUser(data.data?.likes?.includes(user._id));
+      toast.success(
+        data.data?.likes?.includes(user._id)
+          ? "👍 Post liked!"
+          : "👎 Like removed."
+      );
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || "Failed to update like.");
@@ -107,10 +105,7 @@ const PostDetails = () => {
     if (!text?.trim() || !post) return;
 
     try {
-      const token = localStorage.getItem("token");
-      const { data } = await API.post(`/posts/${post._id}/comments`, { text }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await API.post(`/posts/${post._id}/comments`, { text });
       setComments(data.post?.comments || []);
       e.target.reset();
       toast.success("💬 Comment added!");
@@ -121,14 +116,16 @@ const PostDetails = () => {
   };
 
   // Delete comment
-  const deleteComment = async (id) => {
-    if (!post) return;
+  const deleteComment = async (commentId) => {
+    if (!user || !post) {
+      toast.info("Please login to delete comments.");
+      return;
+    }
 
     try {
-      const token = localStorage.getItem("token");
-      await API.delete(`/comments/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-      setComments((prev) => prev.filter((c) => c._id !== id));
-      toast.success("🗑️ Comment deleted.");
+      await API.delete(`/posts/${post._id}/comments/${commentId}`);
+      setComments((prev) => prev.filter((c) => c._id !== commentId));
+      toast.success("🗑️ Comment deleted!");
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || "Failed to delete comment.");
@@ -185,7 +182,9 @@ const PostDetails = () => {
           onClick={toggleLike}
           disabled={liking}
           className={`px-4 py-2 rounded text-white ${
-            likedByUser ? "bg-gray-500 hover:bg-gray-600" : "bg-blue-600 hover:bg-blue-700"
+            likedByUser
+              ? "bg-gray-500 hover:bg-gray-600"
+              : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
           👍 {likedByUser ? "Unlike" : "Like"} ({likes})
@@ -203,12 +202,42 @@ const PostDetails = () => {
       {post?._id && <AnalyticsChart postId={post._id} />}
 
       {/* Comments Section */}
-      {/* Add your comments JSX here */}
+      <form onSubmit={addComment} className="mt-6">
+        <textarea
+          name="comment"
+          placeholder="Write a comment..."
+          className="w-full border rounded p-2 mb-2"
+        />
+        <button
+          type="submit"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          💬 Add Comment
+        </button>
+      </form>
+
+      <div className="mt-4">
+        {comments.map((c) => (
+          <div
+            key={c._id}
+            className="border-b py-2 text-gray-700 flex justify-between items-center"
+          >
+            <span>
+              <strong>{c.author?.name || "Anonymous"}:</strong> {c.text}
+            </span>
+            {user && user._id === c.author?._id && (
+              <button
+                onClick={() => deleteComment(c._id)}
+                className="text-red-600 hover:text-red-800 text-sm"
+              >
+                🗑️ Delete
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
 export default PostDetails;
-
-
-                     

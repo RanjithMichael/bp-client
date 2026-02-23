@@ -11,7 +11,7 @@ export default function CategoryManager() {
     const fetchCategories = async () => {
       try {
         const res = await API.get("/categories");
-        setCategories(res.data.categories || res.data); // handle both shapes
+        setCategories(res.data.categories || res.data); 
       } catch (err) {
         console.error("Failed to fetch categories:", err);
         setError("Failed to load categories.");
@@ -29,7 +29,7 @@ export default function CategoryManager() {
     }
     try {
       const res = await API.post("/categories", { name: newCategory.trim() });
-      const added = res.data.category || res.data; // handle both shapes
+      const added = res.data.category || res.data; 
       setCategories([...categories, added]);
       setNewCategory("");
       setError(null);

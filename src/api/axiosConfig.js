@@ -11,7 +11,6 @@ const API = axios.create({
 });
 
 // TOKEN REFRESH CONTROL
-
 let isRefreshing = false;
 let refreshSubscribers = [];
 
@@ -25,7 +24,6 @@ const subscribeTokenRefresh = (cb) => {
 };
 
 // REQUEST INTERCEPTOR
-
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
@@ -38,7 +36,6 @@ API.interceptors.request.use(
 );
 
 // RESPONSE INTERCEPTOR
-
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -57,9 +54,9 @@ API.interceptors.response.use(
       if (!isRefreshing) {
         isRefreshing = true;
         try {
-          // ✅ Call refresh endpoint (GET, not POST)
-          const { data } = await API.get("/auth/refresh", { withCredentials: true });
-          const newToken = data.accessToken;
+          // ✅ Call refresh endpoint (POST, not GET)
+          const { data } = await API.post("/auth/refresh", {}, { withCredentials: true });
+          const newToken = data.data.accessToken;
 
           // Save new token
           localStorage.setItem("accessToken", newToken);
@@ -73,7 +70,7 @@ API.interceptors.response.use(
           isRefreshing = false;
           console.warn("Token refresh failed:", refreshError);
 
-          if (refreshError.response?.status === 401) {
+          if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
             localStorage.removeItem("user");
             localStorage.removeItem("accessToken");
             window.location.href = "/login"; // ✅ force redirect
@@ -97,7 +94,6 @@ API.interceptors.response.use(
 );
 
 // GENERIC HELPERS
-
 export const get = async (url, params = {}) => {
   const { data } = await API.get(url, { params });
   return data;

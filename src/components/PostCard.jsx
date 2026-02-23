@@ -19,6 +19,7 @@ const stripHtml = (html = "") => html.replace(/<[^>]+>/g, "");
 
 const PostCard = ({ post }) => {
   const { user } = useContext(AuthContext);
+
   const [imageError, setImageError] = useState(false);
   const [likes, setLikes] = useState(post?.likes?.length ?? 0);
   const [liked, setLiked] = useState(post?.likes?.includes(user?._id) ?? false);
@@ -69,22 +70,22 @@ const PostCard = ({ post }) => {
   };
 
   // Like handler
-const handleLike = async () => {
-  if (liking) return; // prevent double clicks
-  try {
-    setLiking(true);
-    const res = await toggleLike(post._id);
+  const handleLike = async () => {
+    if (liking) return; // prevent double clicks
+    try {
+      setLiking(true);
+      const res = await toggleLike(post._id);
 
-    // ✅ Use likesCount from backend response
-    setLikes(res.likesCount);
-    setLiked(res.liked);
-  } catch (err) {
-    console.error("❌ Error liking post:", err);
-    alert(err.message || "Failed to like post. Please try again.");
-  } finally {
-    setLiking(false);
-  }
-};
+      // ✅ Update state from backend response
+      setLikes(res.likesCount);
+      setLiked(res.liked);
+    } catch (err) {
+      console.error("❌ Error liking post:", err);
+      alert(err.message || "Failed to like post. Please try again.");
+    } finally {
+      setLiking(false);
+    }
+  };
 
   // Show latest 2 comments
   const latestComments = post?.comments?.slice(-2) || [];
