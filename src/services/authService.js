@@ -1,12 +1,10 @@
-import axios from "axios";
-
-const API_URL = "https://bp-server-11.onrender.com/api/auth/";
+import API from "../api/axiosConfig"; // ✅ import the shared Axios instance
 
 // ✅ Register
 export const register = async (userData) => {
   try {
-    const response = await axios.post(API_URL + "register", userData);
-    return response.data; // { success, message, user, token }
+    const { data } = await API.post("/auth/register", userData);
+    return data; // { success, message, user, accessToken }
   } catch (error) {
     throw error.response?.data || { success: false, message: error.message };
   }
@@ -15,21 +13,41 @@ export const register = async (userData) => {
 // ✅ Login
 export const login = async (userData) => {
   try {
-    const response = await axios.post(API_URL + "login", userData);
-    return response.data; // { success, message, user, token }
+    const { data } = await API.post("/auth/login", userData);
+    // Store tokens and user info
+    localStorage.setItem("accessToken", data.accessToken);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    return data;
+  } catch (error) {
+    throw error.response?.data || { success: false, message: error.message };
+  }
+};
+
+// ✅ Refresh Access Token
+export const refreshToken = async () => {
+  try {
+    const { data } = await API.post("/auth/refresh", {}, { withCredentials: true });
+    const newToken = data.data.accessToken;
+    localStorage.setItem("accessToken", newToken);
+    return newToken;
   } catch (error) {
     throw error.response?.data || { success: false, message: error.message };
   }
 };
 
 // ✅ Get Profile
-export const getProfile = async (token) => {
+export const getProfile = async () => {
   try {
-    const response = await axios.get(API_URL + "profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data; // { success, user }
+    const { data } = await API.get("/auth/profile");
+    return data; // { success, user }
   } catch (error) {
     throw error.response?.data || { success: false, message: error.message };
   }
+};
+
+// ✅ Logout
+export const logout = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("user");
+  // Optionally call a backend logout route if you add one
 };
