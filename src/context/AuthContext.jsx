@@ -4,9 +4,18 @@ import API from "../api/axiosConfig";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user")) || null
-  );
+  // ✅ Safe JSON parse for localStorage
+  const getStoredUser = () => {
+    try {
+      const item = localStorage.getItem("user");
+      if (!item || item === "undefined") return null;
+      return JSON.parse(item);
+    } catch {
+      return null;
+    }
+  };
+
+  const [user, setUser] = useState(getStoredUser);
   const [loading, setLoading] = useState(true);
 
   // LOGOUT
@@ -28,7 +37,8 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const { data } = await API.get("/auth/profile"); 
+      API.defaults.headers.common.Authorization = `Bearer ${token}`;
+      const { data } = await API.get("/auth/profile");
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
     } catch (err) {
