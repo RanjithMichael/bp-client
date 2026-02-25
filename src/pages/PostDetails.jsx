@@ -106,7 +106,15 @@ const PostDetails = () => {
 
     try {
       const { data } = await API.post(`/posts/${post._id}/comments`, { text });
-      setComments(data.post?.comments || []);
+
+      // If backend returns the new comment only
+      if (data.data) {
+        setComments((prev) => [...prev, data.data]);
+      } else {
+        // If backend returns the updated post
+        setComments(data.post?.comments || []);
+      }
+
       e.target.reset();
       toast.success("💬 Comment added!");
     } catch (err) {
@@ -117,22 +125,38 @@ const PostDetails = () => {
 
   // Delete comment
   const deleteComment = async (commentId) => {
-    if (!user || !post) {
-      toast.info("Please login to delete comments.");
-      return;
-    }
+  if (!user || !post) {
+    toast.info("Please login to delete comments.");
+    return;
+  }
 
-    try {
-      await API.delete(`/posts/${post._id}/comments/${commentId}`);
+  try {
+    const { data } = await API.delete(`/comments/${post._id}/comments/${commentId}`);
+ 
+
+    if (data.success) {
+      // Remove from local state
       setComments((prev) => prev.filter((c) => c._id !== commentId));
-      toast.success("🗑️ Comment deleted!");
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to delete comment.");
+      toast.success(data.message || "🗑️ Comment deleted!");
+    } else {
+      toast.error("Failed to delete comment.");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data?.message || "Failed to delete comment.");
+  }
+};
 
-  if (loading) return <p className="text-center mt-4">Loading post...</p>;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center mt-10">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-2"></div>
+        <p className="text-gray-500">Loading post...</p>
+      </div>
+    );
+  }
+
   if (error) return <p className="text-center mt-4 text-red-500">{error}</p>;
 
   const imageUrl = post?.image
@@ -151,32 +175,29 @@ const PostDetails = () => {
       />
 
       <h1 className="text-3xl font-bold mb-4 text-gray-900">{post?.title}</h1>
+        <p className="text-gray-600 mb-4">
+  By{" "}
+  <Link
+    to={`/author/${post?.author?.username}`}
+    className="text-blue-600 hover:underline font-medium"
+  >
+    {post?.author?.name || "Unknown Author"}
+  </Link>{" "}
+  • {new Date(post?.createdAt).toLocaleDateString()}
+</p>
 
-      <p className="text-gray-600 mb-4">
-        By{" "}
-        <Link
-          to={`/author/${post?.author?.username}`}
-          className="text-blue-600 hover:underline font-medium"
-        >
-          {post?.author?.name || "Unknown Author"}
-        </Link>{" "}
-        • {new Date(post?.createdAt).toLocaleDateString()}
-      </p>
+<div
+  className="prose max-w-none text-gray-800"
+  dangerouslySetInnerHTML={{ __html: post?.content }}
+/>
 
-      <div
-        className="prose max-w-none text-gray-800"
-        dangerouslySetInnerHTML={{ __html: post?.content }}
-      />
-
-      {user && (
-        <div className="mt-4">
-          <SubscribeButton
-            authorId={post?.author?._id}
-            category={post?.category}
-          />
-        </div>
-      )}
-
+{/* ✅ Subscribe button only if user is logged in and authorId exists */}
+{user && post?.author?._id && (
+  <div className="mt-4">
+    <SubscribeButton authorId={post.author._id} />
+  </div>
+)}
+      
       <div className="flex items-center gap-4 mt-6">
         <button
           onClick={toggleLike}
@@ -223,9 +244,9 @@ const PostDetails = () => {
             className="border-b py-2 text-gray-700 flex justify-between items-center"
           >
             <span>
-              <strong>{c.author?.name || "Anonymous"}:</strong> {c.text}
+              <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
             </span>
-            {user && user._id === c.author?._id && (
+            {user && user._id === c.user?._id && (
               <button
                 onClick={() => deleteComment(c._id)}
                 className="text-red-600 hover:text-red-800 text-sm"
