@@ -24,17 +24,25 @@ export const getPaginatedPosts = (page, limit, search = "") =>
 
 // LIKES & COMMENTS
 
-// ✅ Toggle like/unlike (PUT matches backend route)
+// Toggle like/unlike
 export const toggleLikePost = (id) => put(`/posts/${id}/like`);
 
-// Add comment
-export const addCommentToPost = (id, text) =>
-  post(`/posts/${id}/comments`, { text });
+// Add comment to a post
+export const addCommentToPost = (postId, text) =>
+  post(`/comments/${postId}`, { text });
+
+// Get all comments for a post
+export const getCommentsByPost = (postId) =>
+  get(`/comments/${postId}`);
+
+// Delete comment from a post
+export const deleteCommentFromPost = (postId, commentId) =>
+  remove(`/comments/${postId}/comments/${commentId}`);
 
 
 // PROFILE
 
-export const getUserPosts = (userId) => get(`/users/${userId}/posts`);
+export const getUserProfile = (userId) => get(`/users/${userId}`);
 
 
 // ANALYTICS

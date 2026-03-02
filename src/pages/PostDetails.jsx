@@ -107,11 +107,9 @@ const PostDetails = () => {
     try {
       const { data } = await API.post(`/posts/${post._id}/comments`, { text });
 
-      // If backend returns the new comment only
       if (data.data) {
         setComments((prev) => [...prev, data.data]);
       } else {
-        // If backend returns the updated post
         setComments(data.post?.comments || []);
       }
 
@@ -123,30 +121,27 @@ const PostDetails = () => {
     }
   };
 
-  // Delete comment
-  const deleteComment = async (commentId) => {
-  if (!user || !post) {
-    toast.info("Please login to delete comments.");
-    return;
-  }
-
-  try {
-    const { data } = await API.delete(`/comments/${post._id}/comments/${commentId}`);
- 
-
-    if (data.success) {
-      // Remove from local state
-      setComments((prev) => prev.filter((c) => c._id !== commentId));
-      toast.success(data.message || "🗑️ Comment deleted!");
-    } else {
-      toast.error("Failed to delete comment.");
+  // ✅ Delete comment (fixed route + state update)
+  const handleDeleteComment = async (postId, commentId) => {
+    if (!user || !post) {
+      toast.info("Please login to delete comments.");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    toast.error(err.response?.data?.message || "Failed to delete comment.");
-  }
-};
 
+    try {
+      const { data } = await API.delete(`/posts/${postId}/comments/${commentId}`);
+
+      if (data.success) {
+        setComments((prev) => prev.filter((c) => c._id !== commentId));
+        toast.success(data.message || "🗑️ Comment deleted!");
+      } else {
+        toast.error("Failed to delete comment.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to delete comment.");
+    }
+  };
 
   if (loading) {
     return (
@@ -175,29 +170,28 @@ const PostDetails = () => {
       />
 
       <h1 className="text-3xl font-bold mb-4 text-gray-900">{post?.title}</h1>
-        <p className="text-gray-600 mb-4">
-  By{" "}
-  <Link
-    to={`/author/${post?.author?.username}`}
-    className="text-blue-600 hover:underline font-medium"
-  >
-    {post?.author?.name || "Unknown Author"}
-  </Link>{" "}
-  • {new Date(post?.createdAt).toLocaleDateString()}
-</p>
+      <p className="text-gray-600 mb-4">
+        By{" "}
+        <Link
+          to={`/author/${post?.author?.username}`}
+          className="text-blue-600 hover:underline font-medium"
+        >
+          {post?.author?.name || "Unknown Author"}
+        </Link>{" "}
+        • {new Date(post?.createdAt).toLocaleDateString()}
+      </p>
 
-<div
-  className="prose max-w-none text-gray-800"
-  dangerouslySetInnerHTML={{ __html: post?.content }}
-/>
+      <div
+        className="prose max-w-none text-gray-800"
+        dangerouslySetInnerHTML={{ __html: post?.content }}
+      />
 
-{/* ✅ Subscribe button only if user is logged in and authorId exists */}
-{user && post?.author?._id && (
-  <div className="mt-4">
-    <SubscribeButton authorId={post.author._id} />
-  </div>
-)}
-      
+      {user && post?.author?._id && (
+        <div className="mt-4">
+          <SubscribeButton authorId={post.author._id} />
+        </div>
+      )}
+
       <div className="flex items-center gap-4 mt-6">
         <button
           onClick={toggleLike}
@@ -219,7 +213,6 @@ const PostDetails = () => {
         </button>
       </div>
 
-      {/* Analytics */}
       {post?._id && <AnalyticsChart postId={post._id} />}
 
       {/* Comments Section */}
@@ -246,10 +239,11 @@ const PostDetails = () => {
             <span>
               <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
             </span>
+
             {user && user._id === c.user?._id && (
               <button
-                onClick={() => deleteComment(c._id)}
-                className="text-red-600 hover:text-red-800 text-sm"
+                onClick={() => handleDeleteComment(post._id, c._id)}
+                className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
               >
                 🗑️ Delete
               </button>

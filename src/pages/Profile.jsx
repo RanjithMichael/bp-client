@@ -5,7 +5,7 @@ import PostCard from "../components/PostCard";
 
 // API helpers
 import { get, put } from "../api/axiosConfig";
-import { getUserPosts } from "../api/posts";
+import { getUserPosts } from "../api/users.js";
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
