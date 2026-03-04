@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  FaUser,
   FaCalendarAlt,
   FaThumbsUp,
   FaFacebook,
@@ -11,7 +10,7 @@ import {
   FaCommentDots,
 } from "react-icons/fa";
 import { useState, useContext } from "react";
-import { toggleLikePost } from "../api/posts.js"; 
+import { toggleLikePost } from "../api/posts.js";
 import { AuthContext } from "../context/AuthContext";
 
 // Utility to strip HTML tags
@@ -34,6 +33,7 @@ const PostCard = ({ post }) => {
     : "No description available.";
   const author = post?.author?.name || "Unknown Author";
   const username = post?.author?.username || "";
+  const avatar = post?.author?.avatar || "/images/default-avatar.png";
   const date = post?.createdAt
     ? new Date(post.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
@@ -91,7 +91,7 @@ const PostCard = ({ post }) => {
   const latestComments = post?.comments?.slice(-2) || [];
 
   return (
-    <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden flex flex-col">
       {/* Image */}
       <Link to={postUrl}>
         <img
@@ -104,18 +104,18 @@ const PostCard = ({ post }) => {
       </Link>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-5 flex flex-col flex-grow">
         <Link to={postUrl}>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2 hover:text-blue-600 line-clamp-2">
+          <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 line-clamp-2">
             {title}
           </h2>
         </Link>
 
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3">{content}</p>
+        <p className="text-gray-700 text-sm mb-4 line-clamp-3">{content}</p>
 
         {/* Comment Preview */}
         {latestComments.length > 0 && (
-          <div className="bg-gray-50 rounded-lg p-2 mb-4">
+          <div className="bg-gray-50 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-2 text-gray-500 text-sm mb-2">
               <FaCommentDots /> Latest Comments
             </div>
@@ -144,10 +144,14 @@ const PostCard = ({ post }) => {
 
         {/* Footer */}
         <footer className="flex justify-between items-end mt-auto">
-          <div className="text-xs text-gray-500 space-y-1">
-            {/* Author */}
-            <div className="flex items-center gap-1">
-              <FaUser aria-label="Post author" />
+          <div className="text-xs text-gray-500 space-y-2">
+            {/* Author with Avatar */}
+            <div className="flex items-center gap-2">
+              <img
+                src={avatar}
+                alt={author}
+                className="w-6 h-6 rounded-full object-cover border"
+              />
               {username ? (
                 <Link
                   to={`/author/${username}`}

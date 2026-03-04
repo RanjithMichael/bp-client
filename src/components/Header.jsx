@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
@@ -25,16 +25,21 @@ const Header = () => {
     <header className="bg-blue-600 text-white p-4 flex flex-col md:flex-row justify-between items-center shadow-md">
       {/* Brand */}
       <div className="flex justify-between items-center w-full md:w-auto mb-2 md:mb-0">
-        <Link to="/" className="text-2xl font-bold">
+        <NavLink to="/" className="text-2xl font-bold">
           BlogPlatform
-        </Link>
+        </NavLink>
       </div>
 
       {/* Navigation */}
       <nav className="flex flex-col md:flex-row gap-4 items-center">
-        <Link to="/" className="hover:underline">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            isActive ? "underline font-semibold" : "hover:underline"
+          }
+        >
           Home
-        </Link>
+        </NavLink>
 
         <button
           onClick={handleCreatePostClick}
@@ -46,9 +51,16 @@ const Header = () => {
 
         {user ? (
           <>
-            <Link to="/profile" className="hover:underline font-medium">
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                isActive
+                  ? "font-medium underline"
+                  : "hover:underline font-medium"
+              }
+            >
               {user.name || user.username || user.email || "Profile"}
-            </Link>
+            </NavLink>
             <button
               onClick={handleLogout}
               aria-label="Logout"
@@ -59,18 +71,26 @@ const Header = () => {
           </>
         ) : (
           <>
-            <Link
+            <NavLink
               to="/login"
-              className="bg-blue-500 px-3 py-1 rounded hover:bg-blue-600 text-white font-medium transition"
+              className={({ isActive }) =>
+                isActive
+                  ? "bg-blue-700 px-3 py-1 rounded text-white font-medium transition"
+                  : "bg-blue-500 px-3 py-1 rounded hover:bg-blue-600 text-white font-medium transition"
+              }
             >
               Login
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               to="/register"
-              className="bg-green-500 px-3 py-1 rounded hover:bg-green-600 text-white font-medium transition"
+              className={({ isActive }) =>
+                isActive
+                  ? "bg-green-700 px-3 py-1 rounded text-white font-medium transition"
+                  : "bg-green-500 px-3 py-1 rounded hover:bg-green-600 text-white font-medium transition"
+              }
             >
               Register
-            </Link>
+            </NavLink>
           </>
         )}
       </nav>
