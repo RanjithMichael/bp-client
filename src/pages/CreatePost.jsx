@@ -4,6 +4,7 @@ import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { Select, MenuItem } from "@mui/material"; // ✅ MUI multi-select
 
 const categories = [
   "Technology",
@@ -20,9 +21,7 @@ const CreatePost = () => {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState("");
-
-  // ✅ tags as array instead of string
+  const [selectedCategories, setSelectedCategories] = useState([]); 
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
 
@@ -33,7 +32,6 @@ const CreatePost = () => {
   const [loginMessage, setLoginMessage] = useState("");
 
   // IMAGE PREVIEW
-  
   useEffect(() => {
     if (!image) return;
     const objectUrl = URL.createObjectURL(image);
@@ -42,16 +40,13 @@ const CreatePost = () => {
   }, [image]);
 
   // TAG HANDLING
- 
   const handleAddTag = (e) => {
     if (e.key === "Enter" && tagInput.trim()) {
       e.preventDefault();
-
       const newTag = tagInput.trim().toLowerCase();
       if (!tags.includes(newTag)) {
         setTags([...tags, newTag]);
       }
-
       setTagInput("");
     }
   };
@@ -61,7 +56,6 @@ const CreatePost = () => {
   };
 
   // VALIDATION
-  
   const validate = () => {
     const newErrors = {};
 
@@ -78,15 +72,14 @@ const CreatePost = () => {
       newErrors.content = "Content must be at least 20 characters.";
     }
 
-    if (!category) {
-      newErrors.category = "Category is required.";
+    if (!selectedCategories.length) {
+      newErrors.category = "At least one category is required.";
     }
 
     return newErrors;
   };
 
   // IMAGE UPLOAD
-  
   const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
@@ -99,7 +92,6 @@ const CreatePost = () => {
   };
 
   // SUBMIT
- 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -118,7 +110,6 @@ const CreatePost = () => {
 
     try {
       let imageUrl = null;
-
       if (image) {
         imageUrl = await uploadImage(image);
       }
@@ -126,7 +117,7 @@ const CreatePost = () => {
       await API.post("/posts", {
         title,
         content,
-        category,
+        categories: selectedCategories, // ✅ send array
         tags,
         image: imageUrl,
       });
@@ -143,7 +134,6 @@ const CreatePost = () => {
   };
 
   // UI
-  
   return (
     <div className="max-w-3xl mx-auto mt-12 p-8 bg-white shadow-xl rounded-2xl">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
@@ -184,18 +174,19 @@ const CreatePost = () => {
 
         {/* CATEGORY */}
         <div>
-          <label className="block mb-2 font-medium">Category</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          <label className="block mb-2 font-medium">Categories</label>
+          <Select
+            multiple
+            value={selectedCategories}
+            onChange={(e) => setSelectedCategories(e.target.value)}
+            className="w-full border rounded-lg"
           >
-            <option value="">Select category</option>
             {categories.map((cat) => (
-              <option key={cat}>{cat}</option>
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
             ))}
-          </select>
-
+          </Select>
           {errors.category && (
             <p className="text-red-500 text-sm mt-1">{errors.category}</p>
           )}
@@ -206,7 +197,6 @@ const CreatePost = () => {
           <label className="block mb-2 font-medium">
             Tags (Press Enter to add)
           </label>
-
           <input
             type="text"
             placeholder="react, node, mongodb..."
@@ -215,7 +205,6 @@ const CreatePost = () => {
             onKeyDown={handleAddTag}
             className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
-
           <div className="flex flex-wrap gap-2 mt-3">
             {tags.map((tag, index) => (
               <span
@@ -238,7 +227,6 @@ const CreatePost = () => {
             onChange={(e) => setImage(e.target.files[0])}
             className="w-full border p-3 rounded-lg"
           />
-
           {preview && (
             <img
               src={preview}
