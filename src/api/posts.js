@@ -39,12 +39,8 @@ export const getCommentsByPost = (postId) =>
 export const deleteCommentFromPost = (postId, commentId) =>
   remove(`/comments/${postId}/comments/${commentId}`);
 
-
 // PROFILE
-
 export const getUserProfile = (userId) => get(`/users/${userId}`);
 
-
 // ANALYTICS
-
 export const getAnalytics = (id) => get(`/posts/${id}/analytics`);

@@ -32,17 +32,16 @@ const PostDetails = () => {
         setError(null);
 
         const { data } = await API.get(`/posts/slug/${slug}`);
-        const fetchedPost = data?.post;
+        const fetchedPost = data.data; // ✅ backend wraps post in data
 
         if (!fetchedPost) {
           setError("Post not found.");
-          setLoading(false);
           return;
         }
 
         setPost(fetchedPost);
-        setLikes(fetchedPost.likes?.length || 0);
-        setShares(fetchedPost.shares || 0);
+        setLikes(fetchedPost.likesCount ?? fetchedPost.likes?.length ?? 0);
+        setShares(fetchedPost.sharesCount ?? fetchedPost.shares ?? 0);
         setComments(fetchedPost.comments || []);
         setLikedByUser(user ? fetchedPost.likes?.includes(user._id) : false);
       } catch (err) {
@@ -70,10 +69,13 @@ const PostDetails = () => {
     try {
       setLiking(true);
       const { data } = await API.put(`/posts/${post._id}/like`);
-      setLikes(data.data?.likes?.length || likes);
-      setLikedByUser(data.data?.likes?.includes(user._id));
+      const updatedPost = data.data;
+
+      setLikes(updatedPost.likesCount ?? updatedPost.likes?.length ?? likes);
+      setLikedByUser(updatedPost.likes?.includes(user._id));
+
       toast.success(
-        data.data?.likes?.includes(user._id)
+        updatedPost.likes?.includes(user._id)
           ? "👍 Post liked!"
           : "👎 Like removed."
       );
@@ -91,7 +93,10 @@ const PostDetails = () => {
     try {
       const shareUrl = `${window.location.origin}/post/${post.slug}`;
       await navigator.clipboard.writeText(shareUrl);
+
+      // Ideally call backend increment route here
       setShares((prev) => prev + 1);
+
       toast.info("🔗 Post link copied to clipboard!");
     } catch {
       toast.error("Failed to share post.");
@@ -106,13 +111,9 @@ const PostDetails = () => {
 
     try {
       const { data } = await API.post(`/posts/${post._id}/comments`, { text });
+      const updatedPost = data.data;
 
-      if (data.data) {
-        setComments((prev) => [...prev, data.data]);
-      } else {
-        setComments(data.post?.comments || []);
-      }
-
+      setComments(updatedPost.comments || []);
       e.target.reset();
       toast.success("💬 Comment added!");
     } catch (err) {
@@ -121,15 +122,17 @@ const PostDetails = () => {
     }
   };
 
-  // ✅ Delete comment (fixed route + state update)
-  const handleDeleteComment = async (postId, commentId) => {
+  // Delete comment
+  const handleDeleteComment = async (commentId) => {
     if (!user || !post) {
       toast.info("Please login to delete comments.");
       return;
     }
 
     try {
-      const { data } = await API.delete(`/posts/${postId}/comments/${commentId}`);
+      const { data } = await API.delete(
+        `/posts/${post._id}/comments/${commentId}`
+      );
 
       if (data.success) {
         setComments((prev) => prev.filter((c) => c._id !== commentId));
@@ -240,9 +243,9 @@ const PostDetails = () => {
               <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
             </span>
 
-            {user && user._id === c.user?._id && (
+            {user && (user._id === c.user?._id || user.role === "admin") && (
               <button
-                onClick={() => handleDeleteComment(post._id, c._id)}
+                onClick={() => handleDeleteComment(c._id)}
                 className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
               >
                 🗑️ Delete

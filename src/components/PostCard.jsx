@@ -20,7 +20,7 @@ const PostCard = ({ post }) => {
   const { user } = useContext(AuthContext);
 
   const [imageError, setImageError] = useState(false);
-  const [likes, setLikes] = useState(post?.likes?.length ?? 0);
+  const [likes, setLikes] = useState(post?.likesCount ?? post?.likes?.length ?? 0);
   const [liked, setLiked] = useState(post?.likes?.includes(user?._id) ?? false);
   const [liking, setLiking] = useState(false);
 
@@ -48,9 +48,7 @@ const PostCard = ({ post }) => {
     !imageError && post.image
       ? post.image.startsWith("http")
         ? post.image
-        : `${BASE_URL.replace("/api", "")}/uploads/${post.image
-            .replace(/\\/g, "/")
-            .replace(/^uploads\//, "")}`
+        : `${BASE_URL.replace("/api", "")}/${post.image.replace(/\\/g, "/")}`
       : "/default-post.png";
 
   const postUrl = `/post/${post.slug}`;
@@ -71,14 +69,15 @@ const PostCard = ({ post }) => {
 
   // Like handler
   const handleLike = async () => {
-    if (liking) return; // prevent double clicks
+    if (liking) return;
     try {
       setLiking(true);
       const res = await toggleLikePost(post._id);
 
-      // ✅ Update state from backend response
-      setLikes(res.likesCount);
-      setLiked(res.liked);
+      // ✅ Correct response shape
+      const updatedPost = res.data;
+      setLikes(updatedPost.likesCount);
+      setLiked(updatedPost.likes.includes(user?._id));
     } catch (err) {
       console.error("❌ Error liking post:", err);
       alert(err.message || "Failed to like post. Please try again.");
