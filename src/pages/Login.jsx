@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import { login as loginService } from "../services/authService"; // ✅ import from authService
+import { login as loginService } from "../services/authService";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -14,32 +14,27 @@ const Login = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      // ✅ Use authService instead of raw Axios
-      const data = await loginService(form);
+  try {
+    const data = await loginService(form);
 
-      if (data.success) {
-        console.log("Login success:", data.message);
-        localStorage.setItem("token", data.token);
-
-        // Update context
-        login(data.user);
-
-        // Navigate to dashboard or home
-        navigate("/dashboard");
-      } else {
-        setError(data.message);
-      }
-    } catch (err) {
-      setError(err.message || "Login failed");
-    } finally {
-      setLoading(false);
+    if (data.success) {
+      console.log("Login success:", data.message);
+      localStorage.setItem("accessToken", data.token); 
+      login(data.user);
+      navigate("/dashboard");
+    } else {
+      setError(data.message);
     }
-  };
+  } catch (err) {
+    setError(err.message || "Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div

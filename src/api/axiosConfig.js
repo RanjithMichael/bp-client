@@ -10,7 +10,7 @@ const API = axios.create({
   withCredentials: true, // ensures cookies (refreshToken) are sent
 });
 
-// TOKEN REFRESH CONTROL
+// TOKEN REFRESH CONTROL 
 let isRefreshing = false;
 let refreshSubscribers = [];
 
@@ -23,10 +23,10 @@ const subscribeTokenRefresh = (cb) => {
   refreshSubscribers.push(cb);
 };
 
-// REQUEST INTERCEPTOR
+// REQUEST INTERCEPTOR 
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken"); // unified key
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -35,7 +35,7 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// RESPONSE INTERCEPTOR
+// RESPONSE INTERCEPTOR 
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -52,11 +52,13 @@ API.interceptors.response.use(
       if (!isRefreshing) {
         isRefreshing = true;
         try {
+          // Call refresh endpoint
           const { data } = await API.post("/auth/refresh", {}, { withCredentials: true });
-          const newToken = data?.data?.accessToken || data?.accessToken;
+          const newToken = data?.accessToken || data?.data?.accessToken;
 
           if (!newToken) throw new Error("No accessToken in refresh response");
 
+          // Store new token
           localStorage.setItem("accessToken", newToken);
           API.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
@@ -89,7 +91,7 @@ API.interceptors.response.use(
   }
 );
 
-// GENERIC HELPERS
+//  GENERIC HELPERS 
 export const get = async (url, params = {}) => {
   const { data } = await API.get(url, { params });
   return data;
