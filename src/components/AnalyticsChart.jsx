@@ -23,6 +23,8 @@ const AnalyticsChart = ({ postId }) => {
         setLoading(true);
         setError(null);
 
+        // If your analytics route is public, you don’t need token headers.
+        // If protected, uncomment below:
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -31,9 +33,9 @@ const AnalyticsChart = ({ postId }) => {
         if (data.success && data.analytics) {
           setAnalytics([
             { name: "Views", value: data.analytics.views || 0 },
-            { name: "Likes", value: data.analytics.likes || 0 },
-            { name: "Shares", value: data.analytics.shares || 0 },
-            { name: "Comments", value: data.analytics.comments || 0 },
+            { name: "Likes", value: data.analytics.likesCount || 0 },
+            { name: "Shares", value: data.analytics.sharesCount || 0 },
+            { name: "Comments", value: data.analytics.commentsCount || 0 },
           ]);
         } else {
           setError("No analytics available for this post.");
@@ -64,7 +66,7 @@ const AnalyticsChart = ({ postId }) => {
         <BarChart data={analytics}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
-          <YAxis />
+          <YAxis allowDecimals={false} />
           <Tooltip />
           <Bar dataKey="value" fill="#3b82f6" />
         </BarChart>
@@ -74,4 +76,3 @@ const AnalyticsChart = ({ postId }) => {
 };
 
 export default AnalyticsChart;
-

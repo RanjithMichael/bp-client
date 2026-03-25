@@ -6,7 +6,7 @@ export const register = async (userData) => {
     const { data } = await API.post("/auth/register", userData);
 
     return {
-      success: true,
+      success: data.success,
       token: data.accessToken,
       user: data.user,
       message: data.message,
@@ -21,7 +21,7 @@ export const login = async (userData) => {
   try {
     const { data } = await API.post("/auth/login", userData);
 
-    // Store tokens and user info
+    // Store tokens and user info consistently
     localStorage.setItem("accessToken", data.accessToken);
     localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -40,12 +40,13 @@ export const login = async (userData) => {
 export const refreshToken = async () => {
   try {
     const { data } = await API.post("/auth/refresh", {}, { withCredentials: true });
-    const newToken = data.data.accessToken;
+    const newToken = data.accessToken; 
     localStorage.setItem("accessToken", newToken);
 
     return {
-      success: true,
+      success: data.success,
       token: newToken,
+      message: data.message,
     };
   } catch (error) {
     throw error.response?.data || { success: false, message: error.message };
@@ -57,8 +58,9 @@ export const getProfile = async () => {
   try {
     const { data } = await API.get("/auth/profile");
     return {
-      success: true,
-      user: data.user,
+      success: data.success,
+      user: data.user, 
+      message: data.message,
     };
   } catch (error) {
     throw error.response?.data || { success: false, message: error.message };

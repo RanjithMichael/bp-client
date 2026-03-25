@@ -26,13 +26,16 @@ const subscribeTokenRefresh = (cb) => {
 // REQUEST INTERCEPTOR 
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken"); // unified key
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    // If something goes wrong while setting up the request
+    return Promise.reject(error);
+  }
 );
 
 // RESPONSE INTERCEPTOR 

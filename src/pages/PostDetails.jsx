@@ -24,69 +24,71 @@ const PostDetails = () => {
 
   // Fetch post
   useEffect(() => {
-    if (!slug || authLoading) return;
+  if (!slug || authLoading) return;
 
-    const fetchPost = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const { data } = await API.get(`/posts/slug/${slug}`);
-        const fetchedPost = data.data; // ✅ backend wraps post in data
-
-        if (!fetchedPost) {
-          setError("Post not found.");
-          return;
-        }
-
-        setPost(fetchedPost);
-        setLikes(fetchedPost.likesCount ?? fetchedPost.likes?.length ?? 0);
-        setShares(fetchedPost.sharesCount ?? fetchedPost.shares ?? 0);
-        setComments(fetchedPost.comments || []);
-        setLikedByUser(user ? fetchedPost.likes?.includes(user._id) : false);
-      } catch (err) {
-        console.error(err);
-        setError(
-          err.response?.status === 404
-            ? "Post not found or may have been removed."
-            : "Failed to load the post. Please try again later."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPost();
-  }, [slug, user, authLoading]);
-
-  // Like/unlike
-  const toggleLike = async () => {
-    if (!user || !post) {
-      toast.info("Please login to like this post.");
-      return;
-    }
-
+  const fetchPost = async () => {
     try {
-      setLiking(true);
-      const { data } = await API.put(`/posts/${post._id}/like`);
-      const updatedPost = data.data;
+      setLoading(true);
+      setError(null);
 
-      setLikes(updatedPost.likesCount ?? updatedPost.likes?.length ?? likes);
-      setLikedByUser(updatedPost.likes?.includes(user._id));
+      //Backend returns { success, post }
+      const { data } = await API.get(`/posts/slug/${slug}`);
+      const fetchedPost = data.post;
 
-      toast.success(
-        updatedPost.likes?.includes(user._id)
-          ? "👍 Post liked!"
-          : "👎 Like removed."
-      );
+      if (!fetchedPost) {
+        setError("Post not found.");
+        return;
+      }
+
+      setPost(fetchedPost);
+      setLikes(fetchedPost.likesCount ?? fetchedPost.likes?.length ?? 0);
+      setShares(fetchedPost.sharesCount ?? fetchedPost.shares ?? 0);
+      setComments(fetchedPost.comments || []);
+      setLikedByUser(user ? fetchedPost.likes?.includes(user._id) : false);
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to update like.");
+      console.error("Error fetching post:", err);
+      setError(
+        err.response?.status === 404
+          ? "Post not found or may have been removed."
+          : "Failed to load the post. Please try again later."
+      );
     } finally {
-      setLiking(false);
+      setLoading(false);
     }
   };
 
+  fetchPost();
+}, [slug, user, authLoading]);
+
+  // Like/unlike
+  const toggleLike = async () => {
+  if (!user || !post) {
+    toast.info("Please login to like this post.");
+    return;
+  }
+
+  try {
+    setLiking(true);
+
+    //Backend returns { success, message, post }
+    const { data } = await API.put(`/posts/${post._id}/like`);
+    const updatedPost = data.post;
+
+    setLikes(updatedPost.likesCount ?? updatedPost.likes?.length ?? likes);
+    setLikedByUser(updatedPost.likes?.includes(user._id));
+
+    toast.success(
+      updatedPost.likes?.includes(user._id)
+        ? "👍 Post liked!"
+        : "👎 Like removed."
+    );
+  } catch (err) {
+    console.error("Error toggling like:", err);
+    toast.error(err.response?.data?.message || "Failed to update like.");
+  } finally {
+    setLiking(false);
+  }
+};
   // Share
   const handleShare = async () => {
     if (!post) return;
@@ -104,47 +106,46 @@ const PostDetails = () => {
   };
 
   // Add comment
-  const addComment = async (e) => {
-    e.preventDefault();
-    const text = e.target.comment?.value;
-    if (!text?.trim() || !post) return;
+const addComment = async (e) => {
+  e.preventDefault();
+  const text = e.target.comment?.value;
+  if (!text?.trim() || !post) return;
 
-    try {
-      const { data } = await API.post(`/posts/${post._id}/comments`, { text });
-      const updatedPost = data.data;
+  try {
+    //Backend returns { success, message, post }
+    const { data } = await API.post(`/posts/${post._id}/comments`, { text });
+    const updatedPost = data.post;
 
-      setComments(updatedPost.comments || []);
-      e.target.reset();
-      toast.success("💬 Comment added!");
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to add comment.");
-    }
-  };
-
-  // Delete comment
+    setComments(updatedPost.comments || []);
+    e.target.reset();
+    toast.success("💬 Comment added!");
+  } catch (err) {
+    console.error("Error adding comment:", err);
+    toast.error(err.response?.data?.message || "Failed to add comment.");
+  }
+};
+  //Delete comment
   const handleDeleteComment = async (commentId) => {
-    if (!user || !post) {
-      toast.info("Please login to delete comments.");
-      return;
-    }
+  if (!user || !post) {
+    toast.info("Please login to delete comments.");
+    return;
+  }
 
-    try {
-      const { data } = await API.delete(
-        `/posts/${post._id}/comments/${commentId}`
-      );
+  try {
+    const { data } = await API.delete(`/posts/${post._id}/comments/${commentId}`);
 
-      if (data.success) {
-        setComments((prev) => prev.filter((c) => c._id !== commentId));
-        toast.success(data.message || "🗑️ Comment deleted!");
-      } else {
-        toast.error("Failed to delete comment.");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to delete comment.");
+    if (data.success) {
+      setComments(data.post.comments || []);
+      toast.success(data.message || "🗑️ Comment deleted!");
+    } else {
+      toast.error("Failed to delete comment.");
     }
-  };
+  } catch (err) {
+    console.error("Delete comment error:", err);
+    toast.error(err.response?.data?.message || "Failed to delete comment.");
+  }
+};
+
 
   if (loading) {
     return (
@@ -234,26 +235,22 @@ const PostDetails = () => {
       </form>
 
       <div className="mt-4">
-        {comments.map((c) => (
-          <div
-            key={c._id}
-            className="border-b py-2 text-gray-700 flex justify-between items-center"
-          >
-            <span>
-              <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
-            </span>
-
-            {user && (user._id === c.user?._id || user.role === "admin") && (
-              <button
-                onClick={() => handleDeleteComment(c._id)}
-                className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
-              >
-                🗑️ Delete
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+  {comments.filter(c => !c.isDeleted).map((c) => (
+    <div key={c._id} className="border-b py-2 text-gray-700 flex justify-between items-center">
+      <span>
+        <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
+      </span>
+      {user && (user._id === c.user?._id || user.role === "admin") && (
+        <button
+          onClick={() => handleDeleteComment(c._id)}
+          className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
+        >
+          🗑️ Delete
+        </button>
+      )}
+    </div>
+  ))}
+</div>
     </div>
   );
 };

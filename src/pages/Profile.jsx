@@ -38,46 +38,50 @@ const Profile = () => {
   }, [user, navigate]);
 
   // Fetch profile & posts
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+ useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // ✅ Backend returns { user }
-        const res = await get("/users/profile");
-        setProfile(res.user);
+      const res = await get("/auth/profile");
+      const profileUser = res.user;
 
-        setFormData({
-          name: res.user.name || "",
-          bio: res.user.bio || "",
-          profilePic: res.user.profilePic || "",
-          socialLinks: res.user.socialLinks || {
-            website: "",
-            twitter: "",
-            linkedin: "",
-            github: "",
-          },
-        });
-
-        // ✅ Backend returns { posts }
-        const userPosts = await getUserPosts();
-        setPosts(userPosts.posts || []);
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-        if (err.response?.status === 401) {
-          localStorage.clear();
-          navigate("/register");
-        } else {
-          setError("Failed to load profile.");
-        }
-      } finally {
-        setLoading(false);
+      if (!profileUser) {
+        setError("Profile not found.");
+        return;
       }
-    };
 
-    fetchProfile();
-  }, [navigate]);
+      setProfile(profileUser);
+      setFormData({
+        name: profileUser.name || "",
+        bio: profileUser.bio || "",
+        profilePic: profileUser.profilePic || "",
+        socialLinks: profileUser.socialLinks || {
+          website: "",
+          twitter: "",
+          linkedin: "",
+          github: "",
+        },
+      });
+
+      const userPosts = await getUserPosts(profileUser._id);
+      setPosts(userPosts.posts || []);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      if (err.response?.status === 401) {
+        localStorage.clear();
+        navigate("/register");
+      } else {
+        setError("Failed to load profile.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (user) fetchProfile();
+}, [navigate, user]); 
 
   // Handle input changes
   const handleChange = (e) => {
@@ -93,12 +97,12 @@ const Profile = () => {
     }
   };
 
-  // ✅ Update profile
+  //Update profile
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ Backend returns { user }
-      const updatedRes = await put("/users/profile", formData);
+      //Backend returns { user }
+      const updatedRes = await put("/auth/profile", formData);
       setProfile(updatedRes.user);
       setEditing(false);
       setSuccessMsg("✅ Profile updated successfully!");
