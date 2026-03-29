@@ -10,7 +10,7 @@ const API = axios.create({
   withCredentials: true, // ensures cookies (refreshToken) are sent
 });
 
-// TOKEN REFRESH CONTROL 
+// TOKEN REFRESH CONTROL
 let isRefreshing = false;
 let refreshSubscribers = [];
 
@@ -23,7 +23,7 @@ const subscribeTokenRefresh = (cb) => {
   refreshSubscribers.push(cb);
 };
 
-// REQUEST INTERCEPTOR 
+// REQUEST INTERCEPTOR
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
@@ -32,13 +32,10 @@ API.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    // If something goes wrong while setting up the request
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// RESPONSE INTERCEPTOR 
+// RESPONSE INTERCEPTOR
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -49,15 +46,15 @@ API.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error.response.status === 401 && !originalRequest._isRetry) {
+      originalRequest._isRetry = true;
 
       if (!isRefreshing) {
         isRefreshing = true;
         try {
           // Call refresh endpoint
           const { data } = await API.post("/auth/refresh", {}, { withCredentials: true });
-          const newToken = data?.accessToken || data?.data?.accessToken;
+          const newToken = data.accessToken;
 
           if (!newToken) throw new Error("No accessToken in refresh response");
 
@@ -72,12 +69,9 @@ API.interceptors.response.use(
           refreshSubscribers = [];
           console.warn("Token refresh failed:", refreshError);
 
-          if ([401, 403].includes(refreshError.response?.status)) {
-            localStorage.removeItem("user");
-            localStorage.removeItem("accessToken");
-            window.location.href = "/login";
-          }
-
+          localStorage.removeItem("user");
+          localStorage.removeItem("accessToken");
+          window.location.href = "/login"; // optionally show a toast before redirect
           return Promise.reject(refreshError);
         }
       }
@@ -94,7 +88,7 @@ API.interceptors.response.use(
   }
 );
 
-//  GENERIC HELPERS 
+// GENERIC HELPERS
 export const get = async (url, params = {}) => {
   const { data } = await API.get(url, { params });
   return data;
