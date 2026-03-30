@@ -53,9 +53,13 @@ API.interceptors.response.use(
         isRefreshing = true;
         try {
           // Call refresh endpoint
-          const { data } = await API.post("/auth/refresh", {}, { withCredentials: true });
-          const newToken = data.accessToken;
+          const { data } = await axios.post(
+            `${BASE_URL}/auth/refresh`,
+            {},
+            { withCredentials: true }
+          );
 
+          const newToken = data.accessToken;
           if (!newToken) throw new Error("No accessToken in refresh response");
 
           // Store new token
