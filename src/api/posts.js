@@ -1,50 +1,80 @@
 import { get, post, put, remove } from "./axiosConfig.js";
 
-// POSTS
+//SAFE WRAPPER (prevents app crash)
+const safeRequest = async (apiCall) => {
+  try {
+    return await apiCall();
+  } catch (err) {
+    console.error("API Error:", err?.response?.data || err.message);
+    throw err?.response?.data || err;
+  }
+};
 
-// Get all posts
-export const getAllPosts = () => get("/posts");
+//POSTS
 
-// Get post by slug
-export const getPostBySlug = (slug) => get(`/posts/slug/${slug}`);
+//Get all posts
+export const getAllPosts = () =>
+  safeRequest(() => get("/posts"));
 
-// Create post
-export const createPost = (postData) => post("/posts", postData);
+//Get post by slug
+export const getPostBySlug = (slug) =>
+  safeRequest(() => get(`/posts/slug/${slug}`));
 
-// Update post
-export const updatePost = (id, postData) => put(`/posts/${id}`, postData);
+//Create post
+export const createPost = (postData) =>
+  safeRequest(() => post("/posts", postData));
 
-// Delete post
-export const deletePost = (id) => remove(`/posts/${id}`);
+//Update post
+export const updatePost = (id, postData) =>
+  safeRequest(() => put(`/posts/${id}`, postData));
 
-// Pagination + Search
-export const getPaginatedPosts = (page, limit, search = "") =>
-  get(`/posts?page=${page}&limit=${limit}&search=${search}`);
+//Delete post
+export const deletePost = (id) =>
+  safeRequest(() => remove(`/posts/${id}`));
 
-// LIKES & COMMENTS
+// Pagination + Search (FIXED query params)
+export const getPaginatedPosts = (page = 1, limit = 10, search = "") =>
+  safeRequest(() =>
+    get("/posts", {
+      page,
+      limit,
+      search,
+    })
+  );
+
+//LIKES & COMMENTS
 
 // Toggle like/unlike
-export const toggleLikePost = (id) => put(`/posts/${id}/like`);
+export const toggleLikePost = (id) =>
+  safeRequest(() => put(`/posts/${id}/like`));
 
-// Add comment to a post
+// Add comment
 export const addCommentToPost = (postId, text) =>
-  post(`/posts/${postId}/comments`, { text });
+  safeRequest(() =>
+    post(`/posts/${postId}/comments`, { text })
+  );
 
-// Get all comments for a post
+// Get comments
 export const getCommentsByPost = (postId) =>
-  get(`/posts/${postId}/comments`);
+  safeRequest(() => get(`/posts/${postId}/comments`));
 
-// Delete comment from a post
+// Delete comment
 export const deleteCommentFromPost = (postId, commentId) =>
-  remove(`/posts/${postId}/comments/${commentId}`);
+  safeRequest(() =>
+    remove(`/posts/${postId}/comments/${commentId}`)
+  );
 
-// PROFILE
+//PROFILE
 
 // Current user profile
-export const getMyProfile = () => get("/auth/profile");
+export const getMyProfile = () =>
+  safeRequest(() => get("/auth/profile"));
 
 // Admin: get user by ID
-export const getUserProfileById = (userId) => get(`/users/${userId}`);
+export const getUserProfileById = (userId) =>
+  safeRequest(() => get(`/users/${userId}`));
 
-// ANALYTICS
-export const getAnalytics = (id) => get(`/posts/${id}/analytics`);
+//ANALYTICS
+
+export const getAnalytics = (id) =>
+  safeRequest(() => get(`/posts/${id}/analytics`));

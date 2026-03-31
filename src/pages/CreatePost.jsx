@@ -4,7 +4,7 @@ import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { Select, MenuItem } from "@mui/material"; // ✅ MUI multi-select
+import { Select, MenuItem } from "@mui/material"; //MUI multi-select
 
 const categories = [
   "Technology",
@@ -41,19 +41,31 @@ const CreatePost = () => {
 
   // TAG HANDLING
   const handleAddTag = (e) => {
-    if (e.key === "Enter" && tagInput.trim()) {
-      e.preventDefault();
-      const newTag = tagInput.trim().toLowerCase();
-      if (!tags.includes(newTag)) {
-        setTags([...tags, newTag]);
-      }
-      setTagInput("");
-    }
-  };
+  if (e.key === "Enter" && tagInput.trim()) {
+    e.preventDefault();
 
-  const removeTag = (index) => {
-    setTags(tags.filter((_, i) => i !== index));
-  };
+    const newTag = tagInput.trim().toLowerCase();
+
+    //prevent duplicates
+    if (tags.includes(newTag)) {
+      setTagInput("");
+      return;
+    }
+
+    //limit tags (optional but recommended)
+    if (tags.length >= 5) {
+      alert("Maximum 5 tags allowed");
+      return;
+    }
+
+    setTags((prev) => [...prev, newTag]); //safer update
+    setTagInput("");
+  }
+};
+
+const removeTag = (index) => {
+  setTags((prev) => prev.filter((_, i) => i !== index)); //safer
+};
 
   // VALIDATION
   const validate = () => {
@@ -93,46 +105,66 @@ const CreatePost = () => {
 
   // SUBMIT
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!user) {
-      setLoginMessage("⚠️ You must log in or register to create a post.");
-      return;
+  const token =
+    localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+  console.log("🧪 Token:", token);
+  console.log("🧪 User:", user);
+
+  if (!user || !token) {
+    setLoginMessage("⚠️ Please login again to create a post.");
+    return;
+  }
+
+  const validationErrors = validate();
+  if (Object.keys(validationErrors).length > 0) {
+    setErrors(validationErrors);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    let imageUrl = null;
+
+    if (image) {
+      console.log("📤 Uploading image...");
+      imageUrl = await uploadImage(image);
+      console.log("✅ Image uploaded:", imageUrl);
     }
 
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
+    const payload = {
+      title,
+      content,
+      categories: selectedCategories,
+      tags,
+      image: imageUrl,
+    };
+
+    console.log("📤 Sending post:", payload);
+
+    const res = await API.post("/posts", payload);
+
+    console.log("✅ Post created:", res.data);
+
+    alert("✅ Post created successfully!");
+    navigate("/");
+  } catch (err) {
+    console.error("❌ Create post error:", err);
+
+    if (err.response?.status === 401) {
+      setLoginMessage("⚠️ Session expired. Please login again.");
     }
 
-    setLoading(true);
-
-    try {
-      let imageUrl = null;
-      if (image) {
-        imageUrl = await uploadImage(image);
-      }
-
-      await API.post("/posts", {
-        title,
-        content,
-        categories: selectedCategories, // ✅ send array
-        tags,
-        image: imageUrl,
-      });
-
-      alert("✅ Post created successfully!");
-      navigate("/");
-    } catch (err) {
-      setErrors({
-        api: err.response?.data?.message || "Post creation failed",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    setErrors({
+      api: err.response?.data?.message || "Post creation failed",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
   // UI
   return (
     <div className="max-w-3xl mx-auto mt-12 p-8 bg-white shadow-xl rounded-2xl">
@@ -193,30 +225,39 @@ const CreatePost = () => {
         </div>
 
         {/* TAGS */}
-        <div>
-          <label className="block mb-2 font-medium">
-            Tags (Press Enter to add)
-          </label>
-          <input
-            type="text"
-            placeholder="react, node, mongodb..."
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleAddTag}
-            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-          <div className="flex flex-wrap gap-2 mt-3">
-            {tags.map((tag, index) => (
-              <span
-                key={index}
-                onClick={() => removeTag(index)}
-                className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-blue-600"
-              >
-                {tag} ✕
-              </span>
-            ))}
-          </div>
-        </div>
+        
+<div>
+  <label className="block mb-2 font-medium">
+    Tags (Press Enter or comma)
+  </label>
+
+  <input
+    type="text"
+    placeholder="Type a tag and press Enter..."
+    value={tagInput}
+    onChange={(e) => setTagInput(e.target.value)}
+    onKeyDown={handleAddTag}
+    className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+  />
+
+  <div className="flex flex-wrap gap-2 mt-3">
+    {tags.map((tag, index) => (
+      <span
+        key={index}
+        className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm"
+      >
+        {tag}
+        <button
+          type="button"
+          onClick={() => removeTag(index)}
+          className="text-white hover:text-gray-200"
+        >
+          ✕
+        </button>
+      </span>
+    ))}
+  </div>
+</div>
 
         {/* IMAGE */}
         <div>
