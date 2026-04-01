@@ -69,22 +69,23 @@ const PostCard = ({ post }) => {
 
   // Like handler
   const handleLike = async () => {
-    if (liking) return;
-    try {
-      setLiking(true);
-      const res = await toggleLikePost(post._id);
+  if (liking) return;
 
-      // ✅ Correct response shape
-      const updatedPost = res.data;
-      setLikes(updatedPost.likesCount);
-      setLiked(updatedPost.likes.includes(user?._id));
-    } catch (err) {
-      console.error("❌ Error liking post:", err);
-      alert(err.message || "Failed to like post. Please try again.");
-    } finally {
-      setLiking(false);
-    }
-  };
+  try {
+    setLiking(true);
+
+    const updatedPost = await toggleLikePost(post._id);
+
+    setLikes(updatedPost?.likesCount ?? updatedPost?.likes?.length ?? 0);
+    setLiked(updatedPost?.likes?.includes(user?._id) ?? false);
+
+  } catch (err) {
+    console.error("❌ Error liking post:", err);
+    alert(err?.message || "Failed to like post. Please try again.");
+  } finally {
+    setLiking(false);
+  }
+};
 
   // Show latest 2 comments
   const latestComments = post?.comments?.slice(-2) || [];

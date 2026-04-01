@@ -23,26 +23,47 @@ const AnalyticsChart = ({ postId }) => {
         setLoading(true);
         setError(null);
 
-        // If your analytics route is public, you don’t need token headers.
-        // If protected, uncomment below:
         const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const { data } = await API.get(`/posts/${postId}/analytics`, { headers });
+        //Only attach token if exists
+        const config = token
+          ? { headers: { Authorization: `Bearer ${token}` } }
+          : {};
 
-        if (data.success && data.analytics) {
-          setAnalytics([
-            { name: "Views", value: data.analytics.views || 0 },
-            { name: "Likes", value: data.analytics.likesCount || 0 },
-            { name: "Shares", value: data.analytics.sharesCount || 0 },
-            { name: "Comments", value: data.analytics.commentsCount || 0 },
-          ]);
-        } else {
+        const { data } = await API.get(
+          `/posts/${postId}/analytics`,
+          config
+        );
+
+        //Normalize backend response
+        const analyticsData = data?.analytics || data;
+
+        if (!analyticsData) {
           setError("No analytics available for this post.");
+          return;
         }
+
+        setAnalytics([
+          { name: "Views", value: analyticsData.views || 0 },
+          { name: "Likes", value: analyticsData.likesCount || 0 },
+          { name: "Shares", value: analyticsData.sharesCount || 0 },
+          { name: "Comments", value: analyticsData.commentsCount || 0 },
+        ]);
       } catch (err) {
         console.error("Analytics fetch failed:", err);
-        setError("Failed to load analytics. Please try again later.");
+
+        //Smart error handling
+        if (err.response?.status === 401) {
+          setError("Session expired. Please login again.");
+          
+          // Optional auto logout:
+          // localStorage.clear();
+          // window.location.href = "/login";
+        } else if (err.response?.status === 404) {
+          setError("Analytics not found for this post.");
+        } else {
+          setError("Failed to load analytics. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }
@@ -51,17 +72,33 @@ const AnalyticsChart = ({ postId }) => {
     fetchAnalytics();
   }, [postId]);
 
-  if (loading) return <p className="text-center mt-4">Loading analytics...</p>;
-  if (error) return <p className="text-center mt-4 text-red-500">{error}</p>;
+  if (loading)
+    return (
+      <p className="text-center mt-4 text-gray-500">
+        📊 Loading analytics...
+      </p>
+    );
+
+  if (error)
+    return (
+      <p className="text-center mt-4 text-red-500 font-medium">
+        {error}
+      </p>
+    );
+
   if (!analytics || analytics.length === 0)
-    return <p className="text-center mt-4">No analytics data available.</p>;
+    return (
+      <p className="text-center mt-4 text-gray-500">
+        No analytics data available.
+      </p>
+    );
 
   return (
-    <div
-      className="max-w-2xl mx-auto mt-6"
-      aria-label="Post performance analytics chart"
-    >
-      <h2 className="text-xl font-bold mb-4">Post Performance</h2>
+    <div className="max-w-2xl mx-auto mt-6">
+      <h2 className="text-xl font-bold mb-4 text-gray-800">
+        📊 Post Performance
+      </h2>
+
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={analytics}>
           <CartesianGrid strokeDasharray="3 3" />

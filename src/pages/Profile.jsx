@@ -30,60 +30,69 @@ const Profile = () => {
     },
   });
 
-  // Redirect if not logged in
+  // 🔐 Redirect if not logged in
   useEffect(() => {
     if (!user) {
-      navigate("/register");
+      navigate("/login");
     }
   }, [user, navigate]);
 
-  // Fetch profile & posts
- useEffect(() => {
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // 📡 Fetch profile & posts
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const res = await get("/auth/profile");
-      const profileUser = res.user;
+        const res = await get("/auth/profile");
 
-      if (!profileUser) {
-        setError("Profile not found.");
-        return;
+        console.log("✅ Profile response:", res);
+
+        //Handle both response formats
+        const profileUser = res?.user || res;
+
+        if (!profileUser) {
+          setError("Profile not found.");
+          return;
+        }
+
+        setProfile(profileUser);
+
+        setFormData({
+          name: profileUser.name || "",
+          bio: profileUser.bio || "",
+          profilePic: profileUser.profilePic || "",
+          socialLinks: profileUser.socialLinks || {
+            website: "",
+            twitter: "",
+            linkedin: "",
+            github: "",
+          },
+        });
+
+        //Fetch posts
+        const userPosts = await getUserPosts(profileUser._id);
+
+        console.log("✅ User posts:", userPosts);
+
+        setPosts(userPosts?.posts || userPosts || []);
+      } catch (err) {
+        console.error("❌ Error fetching profile:", err);
+
+        if (err.response?.status === 401) {
+          setError("Session expired. Please login again.");
+        } else {
+          setError(err.response?.data?.message || "Failed to load profile.");
+        }
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setProfile(profileUser);
-      setFormData({
-        name: profileUser.name || "",
-        bio: profileUser.bio || "",
-        profilePic: profileUser.profilePic || "",
-        socialLinks: profileUser.socialLinks || {
-          website: "",
-          twitter: "",
-          linkedin: "",
-          github: "",
-        },
-      });
+    if (user) fetchProfile();
+  }, [user]);
 
-      const userPosts = await getUserPosts(profileUser._id);
-      setPosts(userPosts.posts || []);
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-      if (err.response?.status === 401) {
-        localStorage.clear();
-        navigate("/register");
-      } else {
-        setError("Failed to load profile.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (user) fetchProfile();
-}, [navigate, user]); 
-
-  // Handle input changes
+  //Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -101,19 +110,22 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      //Backend returns { user }
       const updatedRes = await put("/auth/profile", formData);
-      setProfile(updatedRes.user);
+
+      const updatedUser = updatedRes?.user || updatedRes;
+
+      setProfile(updatedUser);
       setEditing(false);
       setSuccessMsg("✅ Profile updated successfully!");
+
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
-      console.error("Error updating profile:", err);
+      console.error("❌ Error updating profile:", err);
       alert(err.response?.data?.message || "Failed to update profile.");
     }
   };
 
-  // Loading
+  //Loading UI
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
@@ -123,7 +135,7 @@ const Profile = () => {
     );
   }
 
-  // Error
+  //Error UI
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -135,12 +147,16 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6">
+
         {/* 👤 Profile Info */}
         <div className="mb-8 border-b pb-6">
           <h1 className="text-3xl font-bold mb-2">
-            {profile.name}'s Profile
+            {profile?.name}'s Profile
           </h1>
-          <p className="text-gray-600 mb-2">Email: {profile.email}</p>
+
+          <p className="text-gray-600 mb-2">
+            Email: {profile?.email}
+          </p>
 
           {editing ? (
             <form onSubmit={handleSubmit} className="space-y-3 mt-4">
@@ -151,6 +167,7 @@ const Profile = () => {
                 placeholder="Name"
                 className="w-full border p-2 rounded"
               />
+
               <input
                 name="bio"
                 value={formData.bio}
@@ -158,6 +175,7 @@ const Profile = () => {
                 placeholder="Bio"
                 className="w-full border p-2 rounded"
               />
+
               <input
                 name="profilePic"
                 value={formData.profilePic}
@@ -186,6 +204,7 @@ const Profile = () => {
                 >
                   Save
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
@@ -201,19 +220,19 @@ const Profile = () => {
             </form>
           ) : (
             <>
-              {profile.bio && (
+              {profile?.bio && (
                 <p className="text-gray-700 mt-2">
                   Bio: {profile.bio}
                 </p>
               )}
 
               <img
-                src={profile.profilePic || "/default-avatar.png"}
+                src={profile?.profilePic || "/default-avatar.png"}
                 alt="Profile"
                 className="w-32 h-32 rounded-full mt-3 object-cover"
               />
 
-              {profile.socialLinks && (
+              {profile?.socialLinks && (
                 <div className="flex gap-4 mt-3 flex-wrap">
                   {Object.entries(profile.socialLinks).map(
                     ([key, value]) =>
@@ -245,6 +264,7 @@ const Profile = () => {
         {/* 📝 User Posts */}
         <div className="mb-10">
           <h2 className="text-2xl font-semibold mb-4">Your Posts</h2>
+
           {posts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {posts.map((post) => (
@@ -263,7 +283,8 @@ const Profile = () => {
           <h2 className="text-2xl font-semibold mb-4">
             Your Subscriptions
           </h2>
-          {profile.subscriptions?.length > 0 ? (
+
+          {profile?.subscriptions?.length > 0 ? (
             <ul className="list-disc list-inside space-y-2">
               {profile.subscriptions.map((sub) => (
                 <li key={sub._id}>
