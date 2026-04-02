@@ -108,7 +108,7 @@ const removeTag = (index) => {
   e.preventDefault();
 
   const token =
-    localStorage.getItem("accessToken") || localStorage.getItem("token");
+    localStorage.getItem("accessToken") 
 
   console.log("🧪 Token:", token);
   console.log("🧪 User:", user);
