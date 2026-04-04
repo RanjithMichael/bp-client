@@ -14,7 +14,7 @@ const API = axios.create({
 let isRefreshing = false;
 let refreshSubscribers = [];
 
-// 🔁 Notify queued requests
+//Notify queued requests
 const onRefreshed = (newToken) => {
   refreshSubscribers.forEach((cb) => cb(newToken));
   refreshSubscribers = [];
@@ -27,11 +27,10 @@ const subscribeTokenRefresh = (cb) => {
 //REQUEST INTERCEPTOR
 API.interceptors.request.use(
   (config) => {
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (user?.token) {
+      config.headers.Authorization = `Bearer ${user.token}`;
     }
 
     return config;
@@ -50,7 +49,7 @@ API.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // HANDLE 401
+    //HANDLE 401
     if (
       error.response.status === 401 &&
       !originalRequest._retry &&

@@ -20,8 +20,12 @@ const PostCard = ({ post }) => {
   const { user } = useContext(AuthContext);
 
   const [imageError, setImageError] = useState(false);
-  const [likes, setLikes] = useState(post?.likesCount ?? post?.likes?.length ?? 0);
-  const [liked, setLiked] = useState(post?.likes?.includes(user?._id) ?? false);
+
+  //FIXED Like State
+  const [likes, setLikes] = useState(post?.likes?.length ?? 0);
+  const [liked, setLiked] = useState(
+    post?.likes?.includes(user?._id) ?? false
+  );
   const [liking, setLiking] = useState(false);
 
   if (!post || !post.slug) return null;
@@ -31,9 +35,11 @@ const PostCard = ({ post }) => {
     ? stripHtml(post.content).slice(0, 120) +
       (stripHtml(post.content).length > 120 ? "..." : "")
     : "No description available.";
+
   const author = post?.author?.name || "Unknown Author";
   const username = post?.author?.username || "";
   const avatar = post?.author?.avatar || "/images/default-avatar.png";
+
   const date = post?.createdAt
     ? new Date(post.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
@@ -44,6 +50,7 @@ const PostCard = ({ post }) => {
 
   const BASE_URL =
     import.meta.env.VITE_API_URL || "https://bp-server-11.onrender.com/api";
+
   const imageUrl =
     !imageError && post.image
       ? post.image.startsWith("http")
@@ -55,6 +62,7 @@ const PostCard = ({ post }) => {
   const fullUrl = `${window.location.origin}${postUrl}`;
   const encodedTitle = encodeURIComponent(title);
 
+  //Share URLs
   const shareUrls = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${fullUrl}`,
     twitter: `https://twitter.com/intent/tweet?url=${fullUrl}&text=${encodedTitle}`,
@@ -67,31 +75,36 @@ const PostCard = ({ post }) => {
     window.open(shareUrls[platform], "_blank", "noopener,noreferrer");
   };
 
-  // Like handler
+  //FIXED Like Handler
   const handleLike = async () => {
-  if (liking) return;
+    if (!user) {
+      alert("Please login to like posts");
+      return;
+    }
 
-  try {
-    setLiking(true);
+    if (liking) return;
 
-    const updatedPost = await toggleLikePost(post._id);
+    try {
+      setLiking(true);
 
-    setLikes(updatedPost?.likesCount ?? updatedPost?.likes?.length ?? 0);
-    setLiked(updatedPost?.likes?.includes(user?._id) ?? false);
+      const res = await toggleLikePost(post._id);
 
-  } catch (err) {
-    console.error("❌ Error liking post:", err);
-    alert(err?.message || "Failed to like post. Please try again.");
-  } finally {
-    setLiking(false);
-  }
-};
+      setLikes(res.likesCount);
+      setLiked(res.liked);
+    } catch (err) {
+      console.error("❌ Error liking post:", err);
+      alert(err?.response?.data?.message || "Failed to like post");
+    } finally {
+      setLiking(false);
+    }
+  };
 
-  // Show latest 2 comments
+  //Latest comments preview
   const latestComments = post?.comments?.slice(-2) || [];
 
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden flex flex-col">
+      
       {/* Image */}
       <Link to={postUrl}>
         <img
@@ -105,15 +118,20 @@ const PostCard = ({ post }) => {
 
       {/* Content */}
       <div className="p-5 flex flex-col flex-grow">
+        
+        {/* Title */}
         <Link to={postUrl}>
           <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 line-clamp-2">
             {title}
           </h2>
         </Link>
 
-        <p className="text-gray-700 text-sm mb-4 line-clamp-3">{content}</p>
+        {/* Description */}
+        <p className="text-gray-700 text-sm mb-4 line-clamp-3">
+          {content}
+        </p>
 
-        {/* Comment Preview */}
+        {/* Comments Preview */}
         {latestComments.length > 0 && (
           <div className="bg-gray-50 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-2 text-gray-500 text-sm mb-2">
@@ -121,7 +139,9 @@ const PostCard = ({ post }) => {
             </div>
             {latestComments.map((c, idx) => (
               <p key={idx} className="text-gray-700 text-xs mb-1">
-                <span className="font-semibold">{c.user?.name || "User"}:</span>{" "}
+                <span className="font-semibold">
+                  {c.user?.name || "User"}:
+                </span>{" "}
                 {c.text}
               </p>
             ))}
@@ -145,7 +165,8 @@ const PostCard = ({ post }) => {
         {/* Footer */}
         <footer className="flex justify-between items-end mt-auto">
           <div className="text-xs text-gray-500 space-y-2">
-            {/* Author with Avatar */}
+
+            {/* Author */}
             <div className="flex items-center gap-2">
               <img
                 src={avatar}
@@ -166,24 +187,27 @@ const PostCard = ({ post }) => {
 
             {/* Date */}
             <div className="flex items-center gap-1">
-              <FaCalendarAlt aria-label="Post date" /> {date}
+              <FaCalendarAlt /> {date}
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-3 mt-2 flex-wrap">
-              {/* Like Button */}
+
+              {/* Like */}
               <button
                 onClick={handleLike}
-                aria-label="Like post"
                 disabled={liking}
                 className={`flex items-center gap-1 ${
                   liked ? "text-blue-600" : "text-gray-600"
-                } hover:text-blue-500 transition`}
+                } hover:text-blue-500 transition ${
+                  liking ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                <FaThumbsUp /> {likes}
+                <FaThumbsUp />
+                {likes}
               </button>
 
-              {/* Share Buttons */}
+              {/* Share */}
               {["facebook", "twitter", "linkedin", "whatsapp", "email"].map(
                 (platform) => {
                   const Icon =
@@ -201,10 +225,6 @@ const PostCard = ({ post }) => {
                     <button
                       key={platform}
                       onClick={() => handleShare(platform)}
-                      title={`Share on ${
-                        platform.charAt(0).toUpperCase() + platform.slice(1)
-                      }`}
-                      aria-label={`Share on ${platform}`}
                       className="text-gray-500 hover:text-blue-600 transition"
                     >
                       <Icon />

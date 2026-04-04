@@ -6,40 +6,41 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   //Safe JSON parse
   const getStoredUser = () => {
-  const item = localStorage.getItem("user");
+    const item = localStorage.getItem("user");
 
-  if (!item || item === "undefined" || item === "null") {
-    return null;
-  }
+    if (!item || item === "undefined" || item === "null") {
+      return null;
+    }
 
-  try {
-    return JSON.parse(item);
-  } catch (err) {
-    console.warn("Invalid user in localStorage, clearing...");
-    localStorage.removeItem("user");
-    return null;
-  }
-};
+    try {
+      return JSON.parse(item);
+    } catch (err) {
+      console.warn("Invalid user in localStorage, clearing...");
+      localStorage.removeItem("user");
+      return null;
+    }
+  };
 
-  //FIX: call function
+  //Initialize state
   const [user, setUser] = useState(() => getStoredUser());
   const [loading, setLoading] = useState(true);
 
-  //LOGOUT (clean everything)
+  //LOGOUT
   const logout = useCallback(() => {
     localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("token"); // fallback cleanup
 
     setUser(null);
 
     delete API.defaults.headers.common.Authorization;
+
+    // optional redirect
+    window.location.href = "/login";
   }, []);
 
-  //REFRESH USER (safe version)
+  //REFRESH USER (keeps token intact)
   const refreshUser = useCallback(async () => {
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
+    const storedUser = getStoredUser();
+    const token = storedUser?.token;
 
     if (!token) {
       setLoading(false);
@@ -52,16 +53,19 @@ export const AuthProvider = ({ children }) => {
 
       const { data } = await API.get("/auth/profile");
 
-      //ensure correct format
       const userData = data?.user || data;
 
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
+      //preserve token
+      const updatedUser = {
+        ...userData,
+        token,
+      };
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
     } catch (err) {
       console.warn("⚠️ Failed to refresh user:", err?.response?.data?.message);
-
-      //DON'T logout immediately
-      // Let axios interceptor handle token expiry
+      //axios interceptor will handle 401
     } finally {
       setLoading(false);
     }
@@ -69,16 +73,24 @@ export const AuthProvider = ({ children }) => {
 
   //INITIAL LOAD
   useEffect(() => {
+    const storedUser = getStoredUser();
+
+    if (storedUser?.token) {
+      API.defaults.headers.common.Authorization = `Bearer ${storedUser.token}`;
+    }
+
     refreshUser();
   }, [refreshUser]);
 
   //LOGIN
   const login = (userData, token) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("accessToken", token);
-    localStorage.setItem("token", token); // fallback safety
+    const fullUser = {
+      ...userData,
+      token,
+    };
 
-    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(fullUser));
+    setUser(fullUser);
 
     API.defaults.headers.common.Authorization = `Bearer ${token}`;
   };
