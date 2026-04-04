@@ -5,6 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { Select, MenuItem } from "@mui/material"; //MUI multi-select
+import { toast } from "react-toastify";
 
 const categories = [
   "Technology",
@@ -54,7 +55,7 @@ const CreatePost = () => {
 
     //limit tags (optional but recommended)
     if (tags.length >= 5) {
-      alert("Maximum 5 tags allowed");
+      toast.success("Maximum 5 tags allowed");
       return;
     }
 
@@ -149,7 +150,7 @@ const removeTag = (index) => {
 
     console.log("✅ Post created:", res.data);
 
-    alert("✅ Post created successfully!");
+    toast.success("✅ Post created successfully!");
     navigate("/");
   } catch (err) {
     console.error("❌ Create post error:", err);

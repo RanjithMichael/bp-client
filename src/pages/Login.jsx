@@ -2,6 +2,7 @@ import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { login as loginService } from "../services/authService";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -30,7 +31,7 @@ const Login = () => {
       setError(data.message);
     }
   } catch (err) {
-    setError(err.message || "Login failed");
+    toast.error(err.message || "Login failed");
   } finally {
     setLoading(false);
   }

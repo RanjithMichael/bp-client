@@ -2,6 +2,7 @@ import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { register as registerService } from "../services/authService"; // ✅ import service
+import { toast } from "react-toastify";
 
 const Register = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -21,7 +22,7 @@ const Register = () => {
     setError("");
 
     try {
-      // ✅ Use authService instead of raw Axios
+      //Use authService instead of raw Axios
       const data = await registerService(form);
 
       if (data.success) {
@@ -34,10 +35,10 @@ const Register = () => {
         // Navigate to dashboard or home
         navigate("/dashboard");
       } else {
-        setError(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      setError(err.message || "Registration failed");
+      toast.error(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }

@@ -12,6 +12,7 @@ import {
 import { useState, useContext } from "react";
 import { toggleLikePost } from "../api/posts.js";
 import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
 // Utility to strip HTML tags
 const stripHtml = (html = "") => html.replace(/<[^>]+>/g, "");
@@ -78,10 +79,9 @@ const PostCard = ({ post }) => {
   //FIXED Like Handler
   const handleLike = async () => {
     if (!user) {
-      alert("Please login to like posts");
-      return;
-    }
-
+  toast.error("Please login to like posts");
+  return;
+}
     if (liking) return;
 
     try {
