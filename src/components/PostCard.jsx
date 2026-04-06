@@ -79,7 +79,7 @@ const PostCard = ({ post }) => {
   //FIXED Like Handler
   const handleLike = async () => {
     if (!user) {
-  toast.error("Please login to like posts");
+  toast.info("Please login to like posts");
   return;
 }
     if (liking) return;
