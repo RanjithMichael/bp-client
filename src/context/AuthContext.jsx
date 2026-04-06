@@ -4,7 +4,9 @@ import API from "../api/axiosConfig";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  //Safe JSON parse
+  
+  //SAFE PARSE USER
+  
   const getStoredUser = () => {
     const item = localStorage.getItem("user");
 
@@ -21,26 +23,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  //Initialize state
+  //STATE
+  
   const [user, setUser] = useState(() => getStoredUser());
   const [loading, setLoading] = useState(true);
 
   //LOGOUT
+  
   const logout = useCallback(() => {
     localStorage.removeItem("user");
-
-    setUser(null);
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("token");
 
     delete API.defaults.headers.common.Authorization;
 
-    // optional redirect
+    setUser(null);
+
     window.location.href = "/login";
   }, []);
 
-  //REFRESH USER (keeps token intact)
+  //REFRESH USER
+  
   const refreshUser = useCallback(async () => {
-    const storedUser = getStoredUser();
-    const token = storedUser?.token;
+    const token =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token");
 
     if (!token) {
       setLoading(false);
@@ -55,44 +62,48 @@ export const AuthProvider = ({ children }) => {
 
       const userData = data?.user || data;
 
-      //preserve token
-      const updatedUser = {
-        ...userData,
-        token,
-      };
-
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      setUser(updatedUser);
+      // store clean user (NO token inside user)
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
     } catch (err) {
-      console.warn("⚠️ Failed to refresh user:", err?.response?.data?.message);
-      //axios interceptor will handle 401
+      console.warn(
+        "⚠️ Failed to refresh user:",
+        err?.response?.data?.message
+      );
+
+      // axios interceptor will handle logout on 401
     } finally {
       setLoading(false);
     }
   }, []);
 
   //INITIAL LOAD
+  
   useEffect(() => {
-    const storedUser = getStoredUser();
+    const token =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token");
 
-    if (storedUser?.token) {
-      API.defaults.headers.common.Authorization = `Bearer ${storedUser.token}`;
+    if (token) {
+      API.defaults.headers.common.Authorization = `Bearer ${token}`;
     }
 
     refreshUser();
   }, [refreshUser]);
 
   //LOGIN
-  const login = (userData, token) => {
-    const fullUser = {
-      ...userData,
-      token,
-    };
+  
+  const login = (userData, accessToken) => {
+    // store token separately (IMPORTANT)
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("token", accessToken); // fallback
 
-    localStorage.setItem("user", JSON.stringify(fullUser));
-    setUser(fullUser);
+    // store user separately
+    localStorage.setItem("user", JSON.stringify(userData));
 
-    API.defaults.headers.common.Authorization = `Bearer ${token}`;
+    setUser(userData);
+
+    API.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
   };
 
   return (

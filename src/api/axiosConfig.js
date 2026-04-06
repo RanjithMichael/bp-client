@@ -7,30 +7,33 @@ const API = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 60000,
-  withCredentials: true,
+  withCredentials: true, // needed for refresh token (cookie)
 });
 
-//CONTROL FLAGS
+//REFRESH CONTROL
+
 let isRefreshing = false;
 let refreshSubscribers = [];
-
-//Notify queued requests
-const onRefreshed = (newToken) => {
-  refreshSubscribers.forEach((cb) => cb(newToken));
-  refreshSubscribers = [];
-};
 
 const subscribeTokenRefresh = (cb) => {
   refreshSubscribers.push(cb);
 };
 
+const onRefreshed = (newToken) => {
+  refreshSubscribers.forEach((cb) => cb(newToken));
+  refreshSubscribers = [];
+};
+
 //REQUEST INTERCEPTOR
+
 API.interceptors.request.use(
   (config) => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const token =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token");
 
-    if (user?.token) {
-      config.headers.Authorization = `Bearer ${user.token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
@@ -39,25 +42,34 @@ API.interceptors.request.use(
 );
 
 //RESPONSE INTERCEPTOR
+
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
+    //No response (network issue)
     if (!error.response) {
       console.warn("Network error:", error.message);
       return Promise.reject(error);
     }
 
-    //HANDLE 401
+    const status = error.response.status;
+
+    //Prevent infinite loop for auth endpoints
     if (
-      error.response.status === 401 &&
-      !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refresh")
+      originalRequest.url.includes("/auth/login") ||
+      originalRequest.url.includes("/auth/refresh")
     ) {
+      return Promise.reject(error);
+    }
+
+    //HANDLE 401 (TOKEN EXPIRED)
+    
+    if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      //If already refreshing → queue request
+      //If already refreshing → queue requests
       if (isRefreshing) {
         return new Promise((resolve) => {
           subscribeTokenRefresh((newToken) => {
@@ -82,13 +94,16 @@ API.interceptors.response.use(
 
         if (!newToken) throw new Error("No accessToken received");
 
-        //Save token properly
+        //Save token (single source of truth)
         localStorage.setItem("accessToken", newToken);
-        localStorage.setItem("token", newToken); // fallback safety
+        localStorage.setItem("token", newToken); // optional backup
 
+        //Update default headers
         API.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
+        //Retry queued requests
         onRefreshed(newToken);
+
         isRefreshing = false;
 
         //Retry original request
@@ -105,6 +120,7 @@ API.interceptors.response.use(
         localStorage.removeItem("accessToken");
         localStorage.removeItem("token");
 
+        //Redirect to login
         window.location.href = "/login";
 
         return Promise.reject(refreshError);
@@ -115,7 +131,8 @@ API.interceptors.response.use(
   }
 );
 
-//HELPERS
+//HELPER METHODS
+
 export const get = async (url, params = {}) => {
   const { data } = await API.get(url, { params });
   return data;
