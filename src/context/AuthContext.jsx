@@ -31,80 +31,60 @@ export const AuthProvider = ({ children }) => {
   //LOGOUT
   
   const logout = useCallback(() => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
 
-    delete API.defaults.headers.common.Authorization;
+  delete API.defaults.headers.common.Authorization;
 
-    setUser(null);
+  setUser(null);
 
-    window.location.href = "/login";
-  }, []);
+  window.location.href = "/login";
+}, []);
 
   //REFRESH USER
   
   const refreshUser = useCallback(async () => {
-    const token =
-      localStorage.getItem("accessToken") ||
-      localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+  if (!token) {
+    setLoading(false);
+    return;
+  }
 
-    try {
-      // attach token
-      API.defaults.headers.common.Authorization = `Bearer ${token}`;
+  try {
+    const { data } = await API.get("/auth/profile");
 
-      const { data } = await API.get("/auth/profile");
+    const userData = data?.user || data;
 
-      const userData = data?.user || data;
-
-      // store clean user (NO token inside user)
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-    } catch (err) {
-      console.warn(
-        "⚠️ Failed to refresh user:",
-        err?.response?.data?.message
-      );
-
-      // axios interceptor will handle logout on 401
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  } catch (err) {
+    console.warn(
+      "⚠️ Failed to refresh user:",
+      err?.response?.data?.message
+    );
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   //INITIAL LOAD
   
   useEffect(() => {
-    const token =
-      localStorage.getItem("accessToken") ||
-      localStorage.getItem("token");
-
-    if (token) {
-      API.defaults.headers.common.Authorization = `Bearer ${token}`;
-    }
-
-    refreshUser();
-  }, [refreshUser]);
+  refreshUser();
+}, [refreshUser]);
 
   //LOGIN
   
-  const login = (userData, accessToken) => {
-    // store token separately (IMPORTANT)
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("token", accessToken); // fallback
+  
+const login = (userData, accessToken) => {
+  localStorage.setItem("token", accessToken);
+  localStorage.setItem("user", JSON.stringify(userData));
 
-    // store user separately
-    localStorage.setItem("user", JSON.stringify(userData));
+  setUser(userData);
 
-    setUser(userData);
-
-    API.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-  };
+  API.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+};
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>
