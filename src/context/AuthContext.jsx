@@ -59,25 +59,38 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
   } catch (err) {
-    console.warn(
-      "⚠️ Failed to refresh user:",
-      err?.response?.data?.message
-    );
-  } finally {
-    setLoading(false);
+  console.warn(
+    "⚠️ Failed to refresh user:",
+    err?.response?.data?.message
+  );
+
+  // if token invalid → logout cleanly
+  if (err?.response?.status === 401) {
+    logout();
   }
+}
 }, []);
 
   //INITIAL LOAD
   
   useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    API.defaults.headers.common.Authorization = `Bearer ${token}`;
+  }
+
   refreshUser();
 }, [refreshUser]);
 
   //LOGIN
-  
-  
+
 const login = (userData, accessToken) => {
+  if (!accessToken) {
+    console.error("No token received during login");
+    return;
+  }
+
   localStorage.setItem("token", accessToken);
   localStorage.setItem("user", JSON.stringify(userData));
 

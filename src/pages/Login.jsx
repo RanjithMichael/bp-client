@@ -23,11 +23,13 @@ const Login = () => {
     const data = await loginService(form);
 
     if (data.success) {
-      console.log("Login success:", data.message);
-      localStorage.setItem("accessToken", data.token); 
-      login(data.user);
-      navigate("/dashboard");
-    } else {
+  console.log("Login success:", data.message);
+
+  //correct token usage
+  login(data.user, data.accessToken);
+
+  navigate("/dashboard");
+} else {
       setError(data.message);
     }
   } catch (err) {

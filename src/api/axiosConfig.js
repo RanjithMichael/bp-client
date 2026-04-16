@@ -90,7 +90,7 @@ API.interceptors.response.use(
           { withCredentials: true }
         );
 
-        const newToken = data?.accessToken;
+        const newToken = data.accessToken;
 
         if (!newToken) throw new Error("No accessToken received");
 
