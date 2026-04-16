@@ -1,73 +1,85 @@
 import API from "../api/axiosConfig";
 
-// Register
+//REGISTER
 export const register = async (userData) => {
   try {
     const { data } = await API.post("/auth/register", userData);
 
     return {
       success: data.success,
-      token: data.accessToken,
+      accessToken: data.accessToken, //FIXED
       user: data.user,
       message: data.message,
     };
   } catch (error) {
-    throw error.response?.data || { success: false, message: error.message };
+    throw error.response?.data || {
+      success: false,
+      message: error.message,
+    };
   }
 };
 
-// Login
+//LOGIN
 export const login = async (userData) => {
   try {
     const { data } = await API.post("/auth/login", userData);
 
-    // Store tokens and user info consistently
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("user", JSON.stringify(data.user));
-
+    //DO NOT store here (AuthContext will handle it)
     return {
       success: data.success,
-      token: data.accessToken,
+      accessToken: data.accessToken, //FIXED
       user: data.user,
       message: data.message,
     };
   } catch (error) {
-    throw error.response?.data || { success: false, message: error.message };
+    throw error.response?.data || {
+      success: false,
+      message: error.message,
+    };
   }
 };
 
-// Refresh Access Token
+//REFRESH TOKEN
 export const refreshToken = async () => {
   try {
-    const { data } = await API.post("/auth/refresh", {}, { withCredentials: true });
-    const newToken = data.accessToken; 
-    localStorage.setItem("accessToken", newToken);
+    const { data } = await API.post(
+      "/auth/refresh",
+      {},
+      { withCredentials: true }
+    );
 
     return {
       success: data.success,
-      token: newToken,
+      accessToken: data.accessToken, //FIXED
       message: data.message,
     };
   } catch (error) {
-    throw error.response?.data || { success: false, message: error.message };
+    throw error.response?.data || {
+      success: false,
+      message: error.message,
+    };
   }
 };
 
-// Get Profile
+//GET PROFILE
 export const getProfile = async () => {
   try {
     const { data } = await API.get("/auth/profile");
+
     return {
       success: data.success,
-      user: data.user, 
+      user: data.user,
       message: data.message,
     };
   } catch (error) {
-    throw error.response?.data || { success: false, message: error.message };
+    throw error.response?.data || {
+      success: false,
+      message: error.message,
+    };
   }
 };
 
-// Logout
+//LOGOUT
 export const logout = () => {
   localStorage.removeItem("accessToken");
   localStorage.removeItem("user");

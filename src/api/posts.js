@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { get, post, put, remove } from "./axiosConfig.js";
 
 //SAFE WRAPPER (prevents app crash)
@@ -5,7 +6,7 @@ const safeRequest = async (apiCall) => {
   try {
     return await apiCall();
   } catch (err) {
-    console.error("API Error:", err?.response?.data || err.message);
+    toast.error("API Error:", err?.response?.data || err.message);
     throw err?.response?.data || err;
   }
 };

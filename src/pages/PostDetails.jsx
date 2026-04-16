@@ -46,7 +46,7 @@ const PostDetails = () => {
       setComments(fetchedPost.comments || []);
       setLikedByUser(user ? fetchedPost.likes?.includes(user._id) : false);
     } catch (err) {
-      console.error("Error fetching post:", err);
+      toast.error("Error fetching post:", err);
       setError(
         err.response?.status === 404
           ? "Post not found or may have been removed."
@@ -83,7 +83,7 @@ const PostDetails = () => {
         : "👎 Like removed."
     );
   } catch (err) {
-    console.error("Error toggling like:", err);
+    toast.error("Error toggling like:", err);
     toast.error(err.response?.data?.message || "Failed to update like.");
   } finally {
     setLiking(false);
@@ -120,7 +120,7 @@ const addComment = async (e) => {
     e.target.reset();
     toast.success("💬 Comment added!");
   } catch (err) {
-    console.error("Error adding comment:", err);
+    toast.error("Error adding comment:", err);
     toast.error(err.response?.data?.message || "Failed to add comment.");
   }
 };
@@ -141,7 +141,7 @@ const addComment = async (e) => {
       toast.error("Failed to delete comment.");
     }
   } catch (err) {
-    console.error("Delete comment error:", err);
+    toast.error("Delete comment error:", err);
     toast.error(err.response?.data?.message || "Failed to delete comment.");
   }
 };

@@ -23,13 +23,16 @@ const Login = () => {
     const data = await loginService(form);
 
     if (data.success) {
-  console.log("Login success:", data.message);
+      toast.success("Login success:", data.message);
 
-  //correct token usage
-  login(data.user, data.accessToken);
+      //FIXED
+      localStorage.setItem("accessToken", data.accessToken);
 
-  navigate("/dashboard");
-} else {
+      //PASS TOKEN ALSO
+      login(data.user, data.accessToken);
+
+      navigate("/dashboard");
+    } else {
       setError(data.message);
     }
   } catch (err) {

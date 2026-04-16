@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom";
 import API from "../api/axiosConfig";
+import { toast } from "react-toastify";
 
 export default function Search({ query }) {
   const [results, setResults] = useState([]);
@@ -22,7 +23,7 @@ export default function Search({ query }) {
         const res = await API.get(`/posts?search=${encodeURIComponent(query)}`);
         setResults(res.data.posts || []);
       } catch (err) {
-        console.error(err?.response?.data || err);
+        toast.error(err?.response?.data || err);
         setError("Failed to fetch posts. Please try again.");
       } finally {
         setLoading(false);

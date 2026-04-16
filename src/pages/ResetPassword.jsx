@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import API from "../api/axiosConfig";
+import { toast } from "react-toastify";
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -29,7 +30,7 @@ const ResetPassword = () => {
       setMessage("✅ Password reset successful! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      console.error("Reset error:", err);
+      toast.error("Reset error:", err);
       setMessage(err.response?.data?.message || "Invalid or expired reset link.");
     } finally {
       setLoading(false);

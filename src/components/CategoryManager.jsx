@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import API from "../api/axiosConfig";
+import { toast } from "react-toastify";
 
 export default function CategoryManager() {
   const [categories, setCategories] = useState([]);
@@ -13,7 +14,7 @@ export default function CategoryManager() {
         const res = await API.get("/categories");
         setCategories(res.data.categories || res.data); 
       } catch (err) {
-        console.error("Failed to fetch categories:", err);
+        toast.error("Failed to fetch categories:", err);
         setError("Failed to load categories.");
       } finally {
         setLoading(false);
@@ -34,7 +35,7 @@ export default function CategoryManager() {
       setNewCategory("");
       setError(null);
     } catch (err) {
-      console.error("Failed to add category:", err);
+      toast.error("Failed to add category:", err);
       setError("Failed to add category.");
     }
   };

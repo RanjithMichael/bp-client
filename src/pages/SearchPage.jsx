@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Search from "../components/Search";
 

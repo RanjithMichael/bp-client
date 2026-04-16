@@ -6,6 +6,7 @@ import PostCard from "../components/PostCard";
 // API helpers
 import { get, put } from "../api/axiosConfig";
 import { getUserPosts } from "../api/users.js";
+import { toast } from "react-toastify";
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
@@ -46,7 +47,7 @@ const Profile = () => {
 
         const res = await get("/auth/profile");
 
-        console.log("✅ Profile response:", res);
+        toast.success("✅ Profile response:", res);
 
         //Handle both response formats
         const profileUser = res?.user || res;
@@ -73,11 +74,11 @@ const Profile = () => {
         //Fetch posts
         const userPosts = await getUserPosts(profileUser._id);
 
-        console.log("✅ User posts:", userPosts);
+        toast.success("✅ User posts:", userPosts);
 
         setPosts(userPosts?.posts || userPosts || []);
       } catch (err) {
-        console.error("❌ Error fetching profile:", err);
+        toast.error("❌ Error fetching profile:", err);
 
         if (err.response?.status === 401) {
           setError("Session expired. Please login again.");
@@ -120,7 +121,7 @@ const Profile = () => {
 
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
-      console.error("❌ Error updating profile:", err);
+      toast.error("❌ Error updating profile:", err);
       alert(err.response?.data?.message || "Failed to update profile.");
     }
   };

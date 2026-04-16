@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const BASE_URL =
   import.meta.env.VITE_API_URL || "https://bp-server-11.onrender.com/api";
@@ -50,7 +51,7 @@ API.interceptors.response.use(
 
     //No response (network issue)
     if (!error.response) {
-      console.warn("Network error:", error.message);
+      toast.warn("Network error:", error.message);
       return Promise.reject(error);
     }
 

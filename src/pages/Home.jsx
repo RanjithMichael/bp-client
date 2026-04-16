@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import PostCard from "../components/PostCard";
 import { getPaginatedPosts } from "../api/posts.js";
+import { toast } from "react-toastify";
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
@@ -56,7 +57,7 @@ const Home = () => {
         setTotalPages(data.totalPages || 1);
         setError(null);
       } catch (err) {
-        console.error("❌ Error fetching posts:", err);
+        toast.error("❌ Error fetching posts:", err);
 
         const message =
           err.response?.data?.message ||

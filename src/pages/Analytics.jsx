@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { toast } from "react-toastify";
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -27,7 +28,7 @@ export default function Analytics() {
         const { data } = await API.get("/posts");
         setPosts(data.posts || []);
       } catch (err) {
-        console.error("Error fetching analytics:", err);
+        toast.error("Error fetching analytics:", err);
         setError("Failed to load analytics data.");
       } finally {
         setLoading(false);

@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import { toast } from "react-toastify";
 
 const AnalyticsChart = ({ postId }) => {
   const [analytics, setAnalytics] = useState(null);
@@ -50,7 +51,7 @@ const AnalyticsChart = ({ postId }) => {
           { name: "Comments", value: analyticsData.commentsCount || 0 },
         ]);
       } catch (err) {
-        console.error("Analytics fetch failed:", err);
+        toast.error("Analytics fetch failed:", err);
 
         //Smart error handling
         if (err.response?.status === 401) {

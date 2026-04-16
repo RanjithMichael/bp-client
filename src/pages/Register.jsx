@@ -26,7 +26,7 @@ const Register = () => {
       const data = await registerService(form);
 
       if (data.success) {
-        console.log("Registration success:", data.message);
+        toast.success("Registration success:", data.message);
         localStorage.setItem("token", data.token);
 
         // Update context
