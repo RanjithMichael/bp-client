@@ -92,8 +92,7 @@ const PostCard = ({ post }) => {
       setLikes(res.likesCount);
       setLiked(res.liked);
     } catch (err) {
-      toast.error("❌ Error liking post:", err);
-      alert(err?.response?.data?.message || "Failed to like post");
+      toast.error(err?.response?.data?.message || "Failed to like post");
     } finally {
       setLiking(false);
     }

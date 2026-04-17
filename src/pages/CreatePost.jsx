@@ -131,9 +131,9 @@ const removeTag = (index) => {
     let imageUrl = null;
 
     if (image) {
-      console.log("📤 Uploading image...");
+      toast.info("📤 Uploading image...");
       imageUrl = await uploadImage(image);
-      console.log("✅ Image uploaded:", imageUrl);
+      toast.success("✅ Image uploaded:", imageUrl);
     }
 
     const payload = {
@@ -144,16 +144,13 @@ const removeTag = (index) => {
       image: imageUrl,
     };
 
-    console.log("📤 Sending post:", payload);
+    toast.info("📤 Sending post:", payload);
 
     const res = await API.post("/posts", payload);
-
-    console.log("✅ Post created:", res.data);
-
     toast.success("✅ Post created successfully!");
     navigate("/");
   } catch (err) {
-    console.error("❌ Create post error:", err);
+    toast.error(err.response?.data?.message || "Failed to create post");
 
     if (err.response?.status === 401) {
       setLoginMessage("⚠️ Session expired. Please login again.");

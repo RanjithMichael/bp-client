@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import API from "../api/axiosConfig";
+import { toast } from "react-toastify";
 
 const AuthorPage = () => {
   const { username } = useParams();
@@ -15,7 +16,7 @@ const AuthorPage = () => {
         setAuthor(res.data.author || res.data.user || null);
         setPosts(res.data.posts || []);
       } catch (err) {
-        console.error("Error fetching author:", err);
+        toast.error(err.response?.data?.message || "Failed to fetch author");
       } finally {
         setLoading(false);
       }

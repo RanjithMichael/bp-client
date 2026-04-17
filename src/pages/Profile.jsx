@@ -2,8 +2,6 @@ import { useEffect, useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import PostCard from "../components/PostCard";
-
-// API helpers
 import { get, put } from "../api/axiosConfig";
 import { getUserPosts } from "../api/users.js";
 import { toast } from "react-toastify";
@@ -31,25 +29,21 @@ const Profile = () => {
     },
   });
 
-  // 🔐 Redirect if not logged in
+  //Redirect if not logged in
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    }
+    if (!user) navigate("/login");
   }, [user, navigate]);
 
-  // 📡 Fetch profile & posts
+  //Fetch profile & posts
   useEffect(() => {
+    if (!user) return;
+
     const fetchProfile = async () => {
       try {
         setLoading(true);
         setError(null);
 
         const res = await get("/auth/profile");
-
-        toast.success("✅ Profile response:", res);
-
-        //Handle both response formats
         const profileUser = res?.user || res;
 
         if (!profileUser) {
@@ -74,23 +68,42 @@ const Profile = () => {
         //Fetch posts
         const userPosts = await getUserPosts(profileUser._id);
 
-        toast.success("✅ User posts:", userPosts);
+        const rawPosts = userPosts?.posts || userPosts || [];
 
-        setPosts(userPosts?.posts || userPosts || []);
+        if (!Array.isArray(rawPosts)) {
+          throw new Error("Invalid user posts data");
+        }
+
+        const validPosts = rawPosts.filter(
+          (post) =>
+            post &&
+            post._id &&
+            typeof post._id === "string" &&
+            post.title?.trim() &&
+            post.content?.trim() &&
+            post.isDeleted !== true
+        );
+
+        setPosts(validPosts);
       } catch (err) {
-        toast.error("❌ Error fetching profile:", err);
+        const message =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to load profile.";
 
-        if (err.response?.status === 401) {
+        toast.error(message);
+
+        if (err?.response?.status === 401) {
           setError("Session expired. Please login again.");
         } else {
-          setError(err.response?.data?.message || "Failed to load profile.");
+          setError(message);
         }
       } finally {
         setLoading(false);
       }
     };
 
-    if (user) fetchProfile();
+    fetchProfile();
   }, [user]);
 
   //Handle input changes
@@ -112,7 +125,6 @@ const Profile = () => {
     e.preventDefault();
     try {
       const updatedRes = await put("/auth/profile", formData);
-
       const updatedUser = updatedRes?.user || updatedRes;
 
       setProfile(updatedUser);
@@ -121,8 +133,7 @@ const Profile = () => {
 
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
-      toast.error("❌ Error updating profile:", err);
-      alert(err.response?.data?.message || "Failed to update profile.");
+      toast.error(err.response?.data?.message || "Failed to update profile.");
     }
   };
 
@@ -149,7 +160,7 @@ const Profile = () => {
     <div className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6">
 
-        {/* 👤 Profile Info */}
+        {/* 👤 PROFILE */}
         <div className="mb-8 border-b pb-6">
           <h1 className="text-3xl font-bold mb-2">
             {profile?.name}'s Profile
@@ -199,17 +210,13 @@ const Profile = () => {
               </div>
 
               <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                >
+                <button className="bg-green-600 text-white px-4 py-2 rounded">
                   Save
                 </button>
-
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                  className="bg-gray-400 text-white px-4 py-2 rounded"
                 >
                   Cancel
                 </button>
@@ -233,28 +240,9 @@ const Profile = () => {
                 className="w-32 h-32 rounded-full mt-3 object-cover"
               />
 
-              {profile?.socialLinks && (
-                <div className="flex gap-4 mt-3 flex-wrap">
-                  {Object.entries(profile.socialLinks).map(
-                    ([key, value]) =>
-                      value && (
-                        <a
-                          key={key}
-                          href={value}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          {key}
-                        </a>
-                      )
-                  )}
-                </div>
-              )}
-
               <button
                 onClick={() => setEditing(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded mt-4 hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
               >
                 Edit Profile
               </button>
@@ -262,8 +250,8 @@ const Profile = () => {
           )}
         </div>
 
-        {/* 📝 User Posts */}
-        <div className="mb-10">
+        {/* 📝 POSTS */}
+        <div>
           <h2 className="text-2xl font-semibold mb-4">Your Posts</h2>
 
           {posts.length > 0 ? (
@@ -276,45 +264,6 @@ const Profile = () => {
             <p className="text-gray-500">
               You haven't created any posts yet.
             </p>
-          )}
-        </div>
-
-        {/* 🔔 Subscriptions */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">
-            Your Subscriptions
-          </h2>
-
-          {profile?.subscriptions?.length > 0 ? (
-            <ul className="list-disc list-inside space-y-2">
-              {profile.subscriptions.map((sub) => (
-                <li key={sub._id}>
-                  {sub.author ? (
-                    <>
-                      Author:{" "}
-                      <Link
-                        to={`/author/${sub.author._id}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {sub.author.name}
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      Category:{" "}
-                      <Link
-                        to={`/posts?category=${sub.category}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {sub.category}
-                      </Link>
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500">No subscriptions yet.</p>
           )}
         </div>
       </div>
