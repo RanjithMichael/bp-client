@@ -124,22 +124,46 @@ const addComment = async (e) => {
 };
   //Delete comment
   const handleDeleteComment = async (commentId) => {
-  if (!user || !post) {
+  if (!user) {
     toast.info("Please login to delete comments.");
     return;
   }
 
-  try {
-    const { data } = await API.delete(`/posts/${post._id}/comments/${commentId}`);
+  if (!commentId) {
+    toast.error("Invalid comment ID");
+    return;
+  }
 
-    if (data.success) {
-      setComments(data.post.comments || []);
+  try {
+    //Debug (optional)
+    console.log("Deleting comment:", commentId);
+
+    const { data } = await API.delete(`/comments/${commentId}`);
+
+    if (data?.success) {
+      //Prefer backend response if available
+      if (data?.post?.comments) {
+        setComments(data.post.comments);
+      } else {
+        //Fallback (optimistic UI)
+        setComments((prev) =>
+          prev.filter((c) => c._id !== commentId)
+        );
+      }
+
       toast.success(data.message || "🗑️ Comment deleted!");
     } else {
-      toast.error("Failed to delete comment.");
+      toast.error(data?.message || "Failed to delete comment.");
     }
   } catch (err) {
-    toast.error(err.response?.data?.message || "Failed to delete comment.");
+    console.error("Delete comment error:", err);
+
+    const message =
+      err?.response?.data?.message ||
+      err?.message ||
+      "Failed to delete comment.";
+
+    toast.error(message);
   }
 };
 
