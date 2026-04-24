@@ -8,6 +8,7 @@ const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -15,52 +16,50 @@ const Login = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  try {
-    const data = await loginService(form);
+    try {
+      const data = await loginService(form);
 
-    if (data.success) {
-      toast.success("Login success:", data.message);
+      if (data.success) {
+        toast.success(data.message || "Login successful");
 
-      //FIXED
-      localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("accessToken", data.accessToken);
+        login(data.user, data.accessToken);
 
-      //PASS TOKEN ALSO
-      login(data.user, data.accessToken);
-
-      navigate("/dashboard");
-    } else {
-      setError(data.message);
+        navigate("/dashboard");
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      toast.error(err.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    toast.error(err.message || "Login failed");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{ backgroundImage: "url('/images/london-eye-england.webp')" }}
-    >
-      <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 bg-white bg-opacity-90 p-8 rounded-2xl shadow-xl w-full max-w-md"
+        className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md"
       >
+        {/* Title */}
         <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">
-          Login
+          Welcome Back 👋
         </h2>
 
+        {/* Error */}
         {error && (
-          <p className="text-red-500 text-center mb-4 font-medium">{error}</p>
+          <p className="text-red-500 text-center mb-4 font-medium">
+            {error}
+          </p>
         )}
 
+        {/* Email */}
         <input
           type="email"
           name="email"
@@ -68,10 +67,11 @@ const Login = () => {
           value={form.email}
           onChange={handleChange}
           autoComplete="email"
-          aria-label="Email address"
-          className="border p-3 rounded w-full mb-3 shadow-sm focus:ring focus:ring-blue-300"
+          className="w-full px-4 py-3 mb-4 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
           required
         />
+
+        {/* Password */}
         <input
           type="password"
           name="password"
@@ -79,25 +79,32 @@ const Login = () => {
           value={form.password}
           onChange={handleChange}
           autoComplete="current-password"
-          aria-label="Password"
-          className="border p-3 rounded w-full mb-5 shadow-sm focus:ring focus:ring-blue-300"
+          className="w-full px-4 py-3 mb-5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
           required
         />
 
+        {/* Button */}
         <button
           type="submit"
           disabled={loading}
-          aria-label="Login"
-          className="bg-blue-600 text-white font-semibold p-3 rounded w-full hover:bg-blue-700 transition disabled:opacity-50"
+          className="w-full bg-blue-600 text-white font-semibold py-3 rounded-full hover:bg-blue-700 transition disabled:opacity-50"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
 
+        {/* Links */}
         <div className="flex justify-between mt-4 text-sm">
-          <Link to="/forgot-password" className="text-blue-600 hover:underline">
+          <Link
+            to="/forgot-password"
+            className="text-blue-600 hover:underline"
+          >
             Forgot Password?
           </Link>
-          <Link to="/register" className="text-blue-600 hover:underline">
+
+          <Link
+            to="/register"
+            className="text-blue-600 hover:underline"
+          >
             Register
           </Link>
         </div>

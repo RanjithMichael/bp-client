@@ -19,7 +19,7 @@ const Home = () => {
   const limit = 6;
   const navigate = useNavigate();
 
-  //DEBOUNCE SEARCH (better UX)
+  // 🔁 Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search.trim());
@@ -30,7 +30,7 @@ const Home = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  //FETCH POSTS
+  // 📡 Fetch posts
   const fetchPosts = useCallback(
     async (pageToFetch = 1, reset = false) => {
       try {
@@ -49,7 +49,7 @@ const Home = () => {
           throw new Error("Invalid post data format");
         }
 
-        //Strong validation
+        // ✅ Validate posts
         const validPosts = rawPosts.filter((post) => {
           return (
             post &&
@@ -63,7 +63,7 @@ const Home = () => {
           );
         });
 
-        //Prevent duplicates
+        // 🚫 Prevent duplicates
         setPosts((prev) => {
           if (reset) return validPosts;
 
@@ -93,33 +93,33 @@ const Home = () => {
     [debouncedSearch]
   );
 
-  //INITIAL LOAD + SEARCH
+  // 🚀 Initial load + search
   useEffect(() => {
     fetchPosts(1, true);
   }, [debouncedSearch, fetchPosts]);
 
-  //LOAD MORE
+  // 📄 Load more
   useEffect(() => {
     if (page > 1) {
       fetchPosts(page);
     }
   }, [page, fetchPosts]);
 
-  //LOADING UI
+  // ⏳ Loading UI
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-gray-900 to-black">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
-        <p className="mt-4 text-gray-300 text-lg">Loading posts...</p>
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+        <p className="mt-4 text-gray-600 text-lg">Loading posts...</p>
       </div>
     );
   }
 
-  //ERROR UI
+  // ❌ Error UI
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-gray-900 px-4 text-center">
-        <p className="text-red-400 text-lg mb-4">{error}</p>
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-100 px-4 text-center">
+        <p className="text-red-500 text-lg mb-4">{error}</p>
 
         <button
           onClick={() => {
@@ -127,7 +127,7 @@ const Home = () => {
             setPage(1);
             fetchPosts(1, true);
           }}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md"
+          className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition shadow-md"
         >
           Retry
         </button>
@@ -135,23 +135,23 @@ const Home = () => {
     );
   }
 
-  //MAIN UI
+  // 🎯 Main UI
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
-      <div className="container mx-auto px-4 py-10">
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
 
-        {/* 🔍 SEARCH */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-4">
+        {/* 🔍 Search */}
+        <div className="flex justify-center mb-6">
           <input
             type="text"
             placeholder="🔍 Search posts..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-1/2 p-3 rounded-lg bg-white text-gray-800 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            className="w-full sm:w-1/2 px-5 py-3 rounded-full shadow-md border focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
         </div>
 
-        {/* 📰 POSTS */}
+        {/* 📰 Posts */}
         {posts.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -160,13 +160,13 @@ const Home = () => {
               ))}
             </div>
 
-            {/* LOAD MORE */}
+            {/* 🔽 Load More */}
             {page < totalPages && (
               <div className="flex justify-center mt-12">
                 <button
                   onClick={() => setPage((prev) => prev + 1)}
                   disabled={loadingMore}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md disabled:opacity-50"
+                  className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition shadow-md disabled:opacity-50"
                 >
                   {loadingMore ? "Loading..." : "Load More"}
                 </button>
@@ -175,7 +175,7 @@ const Home = () => {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center mt-20 text-center">
-            <p className="text-gray-300 text-xl mb-6">
+            <p className="text-gray-600 text-xl mb-6">
               {debouncedSearch
                 ? `No posts found for "${debouncedSearch}".`
                 : "No posts available yet."}
@@ -184,7 +184,7 @@ const Home = () => {
             {!debouncedSearch && (
               <button
                 onClick={() => navigate("/create-post")}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md"
+                className="px-6 py-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition shadow-md"
               >
                 Create Your First Post
               </button>

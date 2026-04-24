@@ -1,13 +1,14 @@
 import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { register as registerService } from "../services/authService"; // ✅ import service
+import { register as registerService } from "../services/authService";
 import { toast } from "react-toastify";
 
 const Register = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -22,17 +23,14 @@ const Register = () => {
     setError("");
 
     try {
-      //Use authService instead of raw Axios
       const data = await registerService(form);
 
       if (data.success) {
-        toast.success("Registration success:", data.message);
-        localStorage.setItem("token", data.token);
+        toast.success(data.message || "Registration successful");
 
-        // Update context
+        localStorage.setItem("token", data.token);
         login(data.user);
 
-        // Navigate to dashboard or home
         navigate("/dashboard");
       } else {
         toast.error(data.message);
@@ -45,26 +43,29 @@ const Register = () => {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{
-        backgroundImage: "url('/images/images.jfif')",
-      }}
-    >
-      <div className="absolute inset-0 bg-black bg-opacity-60"></div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
 
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 bg-white bg-opacity-90 p-8 rounded-2xl shadow-xl w-full max-w-md"
+        className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md"
       >
-        <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">
-          Create Account
+        {/* Title */}
+        <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">
+          Create Account 🚀
         </h2>
 
+        <p className="text-center text-gray-500 mb-6 text-sm">
+          Join and start sharing your ideas
+        </p>
+
+        {/* Error */}
         {error && (
-          <p className="text-red-500 text-center mb-4 font-medium">{error}</p>
+          <p className="text-red-500 text-center mb-4 font-medium">
+            {error}
+          </p>
         )}
 
+        {/* Name */}
         <input
           type="text"
           name="name"
@@ -72,10 +73,11 @@ const Register = () => {
           value={form.name}
           onChange={handleChange}
           autoComplete="name"
-          aria-label="Full Name"
-          className="border p-3 rounded w-full mb-3 shadow-sm focus:ring focus:ring-blue-300"
+          className="w-full px-4 py-3 mb-4 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
           required
         />
+
+        {/* Email */}
         <input
           type="email"
           name="email"
@@ -83,10 +85,11 @@ const Register = () => {
           value={form.email}
           onChange={handleChange}
           autoComplete="email"
-          aria-label="Email"
-          className="border p-3 rounded w-full mb-3 shadow-sm focus:ring focus:ring-blue-300"
+          className="w-full px-4 py-3 mb-4 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
           required
         />
+
+        {/* Password */}
         <input
           type="password"
           name="password"
@@ -94,20 +97,19 @@ const Register = () => {
           value={form.password}
           onChange={handleChange}
           autoComplete="new-password"
-          aria-label="Password"
-          className="border p-3 rounded w-full mb-5 shadow-sm focus:ring focus:ring-blue-300"
+          className="w-full px-4 py-3 mb-5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
           required
         />
 
+        {/* Button */}
         <button
           type="submit"
           disabled={loading}
-          aria-label="Register"
-          className="bg-blue-600 text-white font-semibold p-3 rounded w-full hover:bg-blue-700 transition disabled:opacity-70 flex justify-center items-center"
+          className="w-full bg-blue-600 text-white font-semibold py-3 rounded-full hover:bg-blue-700 transition disabled:opacity-70 flex justify-center items-center"
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
               Registering...
             </span>
           ) : (
@@ -115,9 +117,10 @@ const Register = () => {
           )}
         </button>
 
-        <p className="text-center text-sm mt-4">
+        {/* Login Link */}
+        <p className="text-center text-sm mt-5 text-gray-600">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-blue-600 hover:underline font-medium">
             Login
           </Link>
         </p>

@@ -22,78 +22,80 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-blue-600 text-white p-4 flex flex-col md:flex-row justify-between items-center shadow-md">
-      {/* Brand */}
-      <div className="flex justify-between items-center w-full md:w-auto mb-2 md:mb-0">
-        <NavLink to="/" className="text-2xl font-bold">
-          BlogPlatform
-        </NavLink>
-      </div>
+    <header className="bg-white shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
 
-      {/* Navigation */}
-      <nav className="flex flex-col md:flex-row gap-4 items-center">
+        {/* Logo */}
         <NavLink
           to="/"
-          className={({ isActive }) =>
-            isActive ? "underline font-semibold" : "hover:underline"
-          }
+          className="text-2xl font-bold text-blue-600 tracking-wide"
         >
-          Home
+          BlogPlatform
         </NavLink>
 
-        <button
-          onClick={handleCreatePostClick}
-          aria-label="Create a new post"
-          className="bg-blue-500 px-3 py-1 rounded hover:bg-blue-700 text-white font-medium transition"
-        >
-          Create Post
-        </button>
+        {/* Navigation */}
+        <nav className="flex items-center gap-4">
 
-        {user ? (
-          <>
-            <NavLink
-              to="/profile"
-              className={({ isActive }) =>
-                isActive
-                  ? "font-medium underline"
-                  : "hover:underline font-medium"
-              }
-            >
-              {user.name || user.username || user.email || "Profile"}
-            </NavLink>
-            <button
-              onClick={handleLogout}
-              aria-label="Logout"
-              className="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <NavLink
-              to="/login"
-              className={({ isActive }) =>
-                isActive
-                  ? "bg-blue-700 px-3 py-1 rounded text-white font-medium transition"
-                  : "bg-blue-500 px-3 py-1 rounded hover:bg-blue-600 text-white font-medium transition"
-              }
-            >
-              Login
-            </NavLink>
-            <NavLink
-              to="/register"
-              className={({ isActive }) =>
-                isActive
-                  ? "bg-green-700 px-3 py-1 rounded text-white font-medium transition"
-                  : "bg-green-500 px-3 py-1 rounded hover:bg-green-600 text-white font-medium transition"
-              }
-            >
-              Register
-            </NavLink>
-          </>
-        )}
-      </nav>
+          {/* Home */}
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              isActive
+                ? "text-blue-600 font-semibold"
+                : "text-gray-700 hover:text-blue-600 transition"
+            }
+          >
+            Home
+          </NavLink>
+
+          {/* CONDITIONAL UI */}
+          {user ? (
+            <>
+              {/* Create Post */}
+              <button
+                onClick={handleCreatePostClick}
+                className="bg-blue-600 text-white px-4 py-1.5 rounded-full hover:bg-blue-700 transition text-sm font-medium"
+              >
+                Create Post
+              </button>
+
+              {/* Profile */}
+              <NavLink
+                to="/profile"
+                className="bg-gray-100 px-3 py-1 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-200 transition"
+              >
+                👤 {user.name || user.username || "Profile"}
+              </NavLink>
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 text-white px-4 py-1.5 rounded-full hover:bg-red-600 transition text-sm"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Login */}
+              <NavLink
+                to="/login"
+                className="border border-gray-300 px-4 py-1.5 rounded-full text-sm hover:bg-gray-100 transition"
+              >
+                Login
+              </NavLink>
+
+              {/* Register */}
+              <NavLink
+                to="/register"
+                className="bg-green-500 text-white px-4 py-1.5 rounded-full hover:bg-green-600 transition text-sm"
+              >
+                Register
+              </NavLink>
+            </>
+          )}
+        </nav>
+      </div>
     </header>
   );
 };
