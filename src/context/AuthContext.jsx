@@ -5,9 +5,8 @@ import { toast } from "react-toastify";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  
-  //SAFE PARSE USER
-  
+
+  // SAFE PARSE
   const getStoredUser = () => {
     const item = localStorage.getItem("user");
 
@@ -18,85 +17,78 @@ export const AuthProvider = ({ children }) => {
     try {
       return JSON.parse(item);
     } catch (err) {
-      console.warn("Invalid user in localStorage, clearing...");
       localStorage.removeItem("user");
       return null;
     }
   };
 
-  //STATE
-  
   const [user, setUser] = useState(() => getStoredUser());
   const [loading, setLoading] = useState(true);
 
-  //LOGOUT
-  
+  //LOGOUT FIXED
   const logout = useCallback(() => {
-  localStorage.removeItem("user");
-  localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
 
-  delete API.defaults.headers.common.Authorization;
+    delete API.defaults.headers.common.Authorization;
 
-  setUser(null);
+    setUser(null);
 
-  window.location.href = "/login";
-}, []);
+    window.location.href = "/login";
+  }, []);
 
-  //REFRESH USER
-  
+  //REFRESH USER FIXED
   const refreshUser = useCallback(async () => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken"); //
 
-  if (!token) {
-    setLoading(false);
-    return;
-  }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-  try {
-    const { data } = await API.get("/auth/profile");
+    try {
+      const { data } = await API.get("/auth/profile");
 
-    const userData = data?.user || data;
+      const userData = data?.user || data;
 
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-  } catch (err) {
-    toast.error(err?.response?.data?.message, "failed to refresh user");
-    
-  // if token invalid → logout cleanly
-  if (err?.response?.status === 401) {
-    logout();
-  }
-}
-}, []);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to refresh user");
 
-  //INITIAL LOAD
-  
+      if (err?.response?.status === 401) {
+        logout();
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [logout]);
+
+  //INITIAL LOAD FIXED
   useEffect(() => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken"); //
 
-  if (token) {
-    API.defaults.headers.common.Authorization = `Bearer ${token}`;
-  }
+    if (token && token !== "undefined") {
+      API.defaults.headers.common.Authorization = `Bearer ${token}`;
+    }
 
-  refreshUser();
-}, [refreshUser]);
+    refreshUser();
+  }, [refreshUser]);
 
-  //LOGIN
+  // LOGIN (already correct)
+  const login = (userData, accessToken) => {
+    if (!accessToken) {
+      toast.error("No token received during login");
+      return;
+    }
 
-const login = (userData, accessToken) => {
-  if (!accessToken) {
-    toast.error("No token received during login");
-    return;
-  }
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("user", JSON.stringify(userData));
 
-  localStorage.setItem("accessToken", accessToken);
+    API.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
-  localStorage.setItem("user", JSON.stringify(userData));
-
-  API.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-
-  setUser(userData);
-};
+    setUser(userData);
+  };
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>
