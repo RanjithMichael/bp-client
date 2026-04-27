@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [logout]);
 
-  //INITIAL LOAD FIXED
+  
   useEffect(() => {
     const token = localStorage.getItem("accessToken"); //
 
@@ -75,20 +75,23 @@ export const AuthProvider = ({ children }) => {
     refreshUser();
   }, [refreshUser]);
 
-  // LOGIN (already correct)
-  const login = (userData, accessToken) => {
-    if (!accessToken) {
-      toast.error("No token received during login");
-      return;
-    }
+  
+  const login = (userData, token) => {
+  
+  if (!token) {
+    console.error("Login failed: Access token is missing.");
+    toast.error("Authentication failed: No token received");
+    return;
+  }
 
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("user", JSON.stringify(userData));
+  localStorage.setItem("token", token); 
+  localStorage.setItem("user", JSON.stringify(userData));
 
-    API.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+  API.defaults.headers.common.Authorization = `Bearer ${token}`;
 
-    setUser(userData);
-  };
+  setUser(userData);
+  return true; 
+};
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>

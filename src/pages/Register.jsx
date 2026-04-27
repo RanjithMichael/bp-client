@@ -18,29 +18,33 @@ const Register = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const data = await registerService(form);
+  try {
+    const data = await registerService(form);
 
-      if (data.success) {
-        toast.success(data.message || "Registration successful");
+    if (data.success) {
+      toast.success(data.message || "Registration successful");
 
-        localStorage.setItem("token", data.token);
-        login(data.user);
-
-        navigate("/dashboard");
-      } else {
-        toast.error(data.message);
+      const token = data.accessToken; 
+      
+      if (token) {
+        localStorage.setItem("token", token);
+        login(data.user, token); 
       }
-    } catch (err) {
-      toast.error(err.message || "Registration failed");
-    } finally {
-      setLoading(false);
+
+      navigate("/dashboard");
+    } else {
+      toast.error(data.message);
     }
-  };
+  } catch (err) {
+    toast.error(err.message || "Registration failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
