@@ -69,17 +69,15 @@ export const AuthProvider = ({ children }) => {
   const token = localStorage.getItem("token");
 
   if (token && token !== "undefined") {
-     
     API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    refreshUser(); 
+    refreshUser();
   } else {
-    
     delete API.defaults.headers.common["Authorization"];
+    setLoading(false); 
   }
-}, []); 
-
-  
-  const login = (userData, token) => {
+}, []);
+ 
+ const login = (userData, token) => {
   
   if (!token) {
     console.error("Login failed: Access token is missing.");
