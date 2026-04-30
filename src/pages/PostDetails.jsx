@@ -74,8 +74,8 @@ const PostDetails = () => {
     const { data } = await API.put(`/posts/${post._id}/like`);
     const updatedPost = data.post;
 
-    setLikes(updatedPost.likesCount ?? updatedPost.likes?.length ?? likes);
-    setLikedByUser(updatedPost.likes?.includes(user._id));
+    setLikes(updatedPost.likes.length);
+    setLikedByUser(updatedPost.likes.some((id) => id.toString() === user._id));
 
     toast.success(
       updatedPost.likes?.includes(user._id)
@@ -83,6 +83,7 @@ const PostDetails = () => {
         : "👎 Like removed."
     );
   } catch (err) {
+    console.error("LIKE ERROR:", err.response);
     toast.error(err.response?.data?.message || "Failed to update like.");
   } finally {
     setLiking(false);

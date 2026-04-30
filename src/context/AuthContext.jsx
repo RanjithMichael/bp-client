@@ -66,14 +66,17 @@ export const AuthProvider = ({ children }) => {
 
   
   useEffect(() => {
-    const token = localStorage.getItem("token"); 
+  const token = localStorage.getItem("token");
 
-    if (token && token !== "undefined") {
-      API.defaults.headers.common.Authorization = `Bearer ${token}`;
-    }
-
-    refreshUser();
-  }, [refreshUser]);
+  if (token && token !== "undefined") {
+     
+    API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    refreshUser(); 
+  } else {
+    
+    delete API.defaults.headers.common["Authorization"];
+  }
+}, []); 
 
   
   const login = (userData, token) => {
