@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
   //LOGOUT FIXED
   const logout = useCallback(() => {
     localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
+    localStorage.removeItem("token");
 
     delete API.defaults.headers.common.Authorization;
 
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
 
   //REFRESH USER FIXED
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem("accessToken"); //
+    const token = localStorage.getItem("token"); //
 
     if (!token) {
       setLoading(false);
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
 
   
   useEffect(() => {
-    const token = localStorage.getItem("accessToken"); //
+    const token = localStorage.getItem("token"); 
 
     if (token && token !== "undefined") {
       API.defaults.headers.common.Authorization = `Bearer ${token}`;

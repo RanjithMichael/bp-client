@@ -26,7 +26,7 @@ const Login = () => {
       if (data.success) {
         toast.success(data.message || "Login successful");
 
-        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("token", data.accessToken);
         login(data.user, data.accessToken);
 
         navigate("/dashboard");

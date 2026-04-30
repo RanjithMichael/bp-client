@@ -30,7 +30,7 @@ const onRefreshed = (newToken) => {
 API.interceptors.request.use(
   (config) => {
     const token =
-      localStorage.getItem("accessToken");
+      localStorage.getItem("token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -50,7 +50,7 @@ API.interceptors.response.use(
 
     //No response (network issue)
     if (!error.response) {
-      toast.warn("Network error:", error.message);
+      toast.warn(`Network error: ${error.message}`);
       return Promise.reject(error);
     }
 
@@ -95,7 +95,6 @@ API.interceptors.response.use(
         if (!newToken) throw new Error("No accessToken received");
 
         //Save token (single source of truth)
-        localStorage.setItem("accessToken", newToken);
         localStorage.setItem("token", newToken); // optional backup
 
         //Update default headers
@@ -117,7 +116,6 @@ API.interceptors.response.use(
 
         //CLEAN LOGOUT
         localStorage.removeItem("user");
-        localStorage.removeItem("accessToken");
         localStorage.removeItem("token");
 
         //Redirect to login
