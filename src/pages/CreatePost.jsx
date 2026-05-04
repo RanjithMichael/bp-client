@@ -4,17 +4,7 @@ import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { Select, MenuItem } from "@mui/material"; //MUI multi-select
 import { toast } from "react-toastify";
-
-const categories = [
-  "Technology",
-  "Lifestyle",
-  "Education",
-  "Finance",
-  "Travel",
-  "Health",
-];
 
 const CreatePost = () => {
   const { user } = useContext(AuthContext);
@@ -22,7 +12,11 @@ const CreatePost = () => {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState([]); 
+
+  // ✅ UPDATED CATEGORY STATE
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categoryInput, setCategoryInput] = useState("");
+
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
 
@@ -40,35 +34,62 @@ const CreatePost = () => {
     return () => URL.revokeObjectURL(objectUrl);
   }, [image]);
 
+  // CATEGORY HANDLING
+  
+  const handleAddCategory = (e) => {
+    if ((e.key === "Enter" || e.key === ",") && categoryInput.trim()) {
+      e.preventDefault();
+
+      const newCategory = categoryInput.trim().toLowerCase();
+
+      if (selectedCategories.includes(newCategory)) {
+        setCategoryInput("");
+        return;
+      }
+
+      if (selectedCategories.length >= 5) {
+        toast.error("Maximum 5 categories allowed");
+        return;
+      }
+
+      setSelectedCategories((prev) => [...prev, newCategory]);
+      setCategoryInput("");
+    }
+  };
+
+  const removeCategory = (index) => {
+    setSelectedCategories((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // TAG HANDLING
+  
   const handleAddTag = (e) => {
-  if (e.key === "Enter" && tagInput.trim()) {
-    e.preventDefault();
+    if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+      e.preventDefault();
 
-    const newTag = tagInput.trim().toLowerCase();
+      const newTag = tagInput.trim().toLowerCase();
 
-    //prevent duplicates
-    if (tags.includes(newTag)) {
+      if (tags.includes(newTag)) {
+        setTagInput("");
+        return;
+      }
+
+      if (tags.length >= 5) {
+        toast.error("Maximum 5 tags allowed");
+        return;
+      }
+
+      setTags((prev) => [...prev, newTag]);
       setTagInput("");
-      return;
     }
+  };
 
-    //limit tags (optional but recommended)
-    if (tags.length >= 5) {
-      toast.success("Maximum 5 tags allowed");
-      return;
-    }
-
-    setTags((prev) => [...prev, newTag]); //safer update
-    setTagInput("");
-  }
-};
-
-const removeTag = (index) => {
-  setTags((prev) => prev.filter((_, i) => i !== index)); //safer
-};
+  const removeTag = (index) => {
+    setTags((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // VALIDATION
+  
   const validate = () => {
     const newErrors = {};
 
@@ -105,65 +126,63 @@ const removeTag = (index) => {
   };
 
   // SUBMIT
+  
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const token =
-    localStorage.getItem("token") 
+    const token = localStorage.getItem("token");
 
-  console.log("🧪 Token:", token);
-  console.log("🧪 User:", user);
-
-  if (!user || !token) {
-    setLoginMessage("⚠️ Please login again to create a post.");
-    return;
-  }
-
-  const validationErrors = validate();
-  if (Object.keys(validationErrors).length > 0) {
-    setErrors(validationErrors);
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    let imageUrl = null;
-
-    if (image) {
-      toast.info("📤 Uploading image...");
-      imageUrl = await uploadImage(image);
-      toast.success("✅ Image uploaded:", imageUrl);
+    if (!user || !token) {
+      setLoginMessage("⚠️ Please login again to create a post.");
+      return;
     }
 
-    const payload = {
-      title,
-      content,
-      categories: selectedCategories,
-      tags,
-      image: imageUrl,
-    };
-
-    toast.info("📤 Sending post:", payload);
-
-    const res = await API.post("/posts", payload);
-    toast.success("✅ Post created successfully!");
-    navigate("/");
-  } catch (err) {
-    toast.error(err.response?.data?.message || "Failed to create post");
-
-    if (err.response?.status === 401) {
-      setLoginMessage("⚠️ Session expired. Please login again.");
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
 
-    setErrors({
-      api: err.response?.data?.message || "Post creation failed",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+
+    try {
+      let imageUrl = null;
+
+      if (image) {
+        toast.info("Uploading image...");
+        imageUrl = await uploadImage(image);
+        toast.success("Image uploaded");
+      }
+
+      const payload = {
+        title,
+        content,
+        categories: selectedCategories, // ✅ array
+        tags,
+        image: imageUrl,
+      };
+
+      await API.post("/posts", payload);
+
+      toast.success("Post created successfully!");
+      navigate("/");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to create post");
+
+      if (err.response?.status === 401) {
+        setLoginMessage("Session expired. Please login again.");
+      }
+
+      setErrors({
+        api: err.response?.data?.message || "Post creation failed",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // UI
+  
   return (
     <div className="max-w-3xl mx-auto mt-12 p-8 bg-white shadow-xl rounded-2xl">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
@@ -202,60 +221,77 @@ const removeTag = (index) => {
           )}
         </div>
 
-        {/* CATEGORY */}
+        {/* ✅ UPDATED CATEGORY UI */}
         <div>
-          <label className="block mb-2 font-medium">Categories</label>
-          <Select
-            multiple
-            value={selectedCategories}
-            onChange={(e) => setSelectedCategories(e.target.value)}
-            className="w-full border rounded-lg"
-          >
-            {categories.map((cat) => (
-              <MenuItem key={cat} value={cat}>
+          <label className="block mb-2 font-medium">
+            Categories (Press Enter or comma)
+          </label>
+
+          <input
+            type="text"
+            placeholder="Type a category and press Enter..."
+            value={categoryInput}
+            onChange={(e) => setCategoryInput(e.target.value)}
+            onKeyDown={handleAddCategory}
+            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+
+          <div className="flex flex-wrap gap-2 mt-3">
+            {selectedCategories.map((cat, index) => (
+              <span
+                key={index}
+                className="flex items-center gap-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm"
+              >
                 {cat}
-              </MenuItem>
+                <button
+                  type="button"
+                  onClick={() => removeCategory(index)}
+                  className="text-white hover:text-gray-200"
+                >
+                  ✕
+                </button>
+              </span>
             ))}
-          </Select>
+          </div>
+
           {errors.category && (
             <p className="text-red-500 text-sm mt-1">{errors.category}</p>
           )}
         </div>
 
         {/* TAGS */}
-        
-<div>
-  <label className="block mb-2 font-medium">
-    Tags (Press Enter or comma)
-  </label>
+        <div>
+          <label className="block mb-2 font-medium">
+            Tags (Press Enter or comma)
+          </label>
 
-  <input
-    type="text"
-    placeholder="Type a tag and press Enter..."
-    value={tagInput}
-    onChange={(e) => setTagInput(e.target.value)}
-    onKeyDown={handleAddTag}
-    className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-  />
+          <input
+            type="text"
+            placeholder="Type a tag and press Enter..."
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleAddTag}
+            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          />
 
-  <div className="flex flex-wrap gap-2 mt-3">
-    {tags.map((tag, index) => (
-      <span
-        key={index}
-        className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm"
-      >
-        {tag}
-        <button
-          type="button"
-          onClick={() => removeTag(index)}
-          className="text-white hover:text-gray-200"
-        >
-          ✕
-        </button>
-      </span>
-    ))}
-  </div>
-</div>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {tags.map((tag, index) => (
+              <span
+                key={index}
+                className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => removeTag(index)}
+                  className="text-white hover:text-gray-200"
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
 
         {/* IMAGE */}
         <div>
