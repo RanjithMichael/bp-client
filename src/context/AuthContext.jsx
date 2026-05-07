@@ -26,16 +26,25 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   //LOGOUT FIXED
-  const logout = useCallback(() => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+  const logout = useCallback(async () => {
+  try {
+    await API.post("/api/auth/logout"); // backend clears refresh cookie
+  } catch (err) {
+    console.error("Logout error:", err);
+    toast.error("Logout failed, please try again.")
+  }
 
-    delete API.defaults.headers.common.Authorization;
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
 
-    setUser(null);
+  delete API.defaults.headers.common["Authorization"];
 
-    window.location.href = "/login";
-  }, []);
+  setUser(null);
+
+  // Use navigate if available, else fallback
+  window.location.href = "/login";
+}, []);
+
 
   //REFRESH USER FIXED
   const refreshUser = useCallback(async () => {
