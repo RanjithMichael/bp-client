@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-
   // SAFE PARSE
   const getStoredUser = () => {
     const item = localStorage.getItem("user");
@@ -25,10 +24,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => getStoredUser());
   const [loading, setLoading] = useState(true);
 
-  //LOGOUT FIXED
+  // LOGOUT FIXED
   const logout = useCallback(async () => {
   try {
-    await API.post("/api/auth/logout"); // backend clears refresh cookie
+    await API.post("/auth/logout"); // backend clears refresh cookie
   } catch (err) {
     console.error("Logout error:", err);
     toast.error("Logout failed, please try again.")
@@ -46,9 +45,9 @@ export const AuthProvider = ({ children }) => {
 }, []);
 
 
-  //REFRESH USER FIXED
+  // REFRESH USER FIXED
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem("token"); //
+    const token = localStorage.getItem("token");
 
     if (!token) {
       setLoading(false);
@@ -73,35 +72,33 @@ export const AuthProvider = ({ children }) => {
     }
   }, [logout]);
 
-  
   useEffect(() => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  if (token && token !== "undefined") {
-    API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    refreshUser();
-  } else {
-    delete API.defaults.headers.common["Authorization"];
-    setLoading(false); 
-  }
-}, []);
- 
- const login = (userData, token) => {
-  
-  if (!token) {
-    console.error("Login failed: Access token is missing.");
-    toast.error("Authentication failed: No token received");
-    return;
-  }
+    if (token && token !== "undefined") {
+      API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      refreshUser();
+    } else {
+      delete API.defaults.headers.common["Authorization"];
+      setLoading(false);
+    }
+  }, [refreshUser]);
 
-  localStorage.setItem("token", token); 
-  localStorage.setItem("user", JSON.stringify(userData));
+  const login = (userData, token) => {
+    if (!token) {
+      console.error("Login failed: Access token is missing.");
+      toast.error("Authentication failed: No token received");
+      return;
+    }
 
-  API.defaults.headers.common.Authorization = `Bearer ${token}`;
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
 
-  setUser(userData);
-  return true; 
-};
+    API.defaults.headers.common.Authorization = `Bearer ${token}`;
+
+    setUser(userData);
+    return true;
+  };
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>
