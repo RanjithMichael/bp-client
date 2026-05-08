@@ -19,59 +19,41 @@ const Home = () => {
   const limit = 6;
   const navigate = useNavigate();
 
-  // 🔁 Debounce search
+  //Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search.trim());
       setPage(1);
       setPosts([]);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [search]);
 
-  // 📡 Fetch posts
+  //Fetch posts
   const fetchPosts = useCallback(
     async (pageToFetch = 1, reset = false) => {
       try {
         if (reset) setLoading(true);
         else setLoadingMore(true);
 
-        const data = await getPaginatedPosts(
-          pageToFetch,
-          limit,
-          debouncedSearch
-        );
+        const data = await getPaginatedPosts(pageToFetch, limit, debouncedSearch);
 
-        const rawPosts = data?.posts || data?.data || [];
+        //Normalize backend response
+        const rawPosts = Array.isArray(data?.posts)
+          ? data.posts
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
 
         if (!Array.isArray(rawPosts)) {
           throw new Error("Invalid post data format");
         }
 
-        // ✅ Validate posts
-        const validPosts = rawPosts.filter((post) => {
-          return (
-            post &&
-            post._id &&
-            typeof post._id === "string" &&
-            post.slug &&
-            typeof post.slug === "string" &&
-            post.title?.trim() &&
-            post.content?.trim() &&
-            post.isDeleted !== true
-          );
-        });
-
-        // 🚫 Prevent duplicates
+        //Prevent duplicates
         setPosts((prev) => {
-          if (reset) return validPosts;
-
+          if (reset) return rawPosts;
           const existingIds = new Set(prev.map((p) => p._id));
-          const newPosts = validPosts.filter(
-            (p) => !existingIds.has(p._id)
-          );
-
+          const newPosts = rawPosts.filter((p) => !existingIds.has(p._id));
           return [...prev, ...newPosts];
         });
 
@@ -82,7 +64,6 @@ const Home = () => {
           err?.response?.data?.message ||
           err?.message ||
           "Failed to fetch posts.";
-
         toast.error(message);
         setError(message);
       } finally {
@@ -93,19 +74,19 @@ const Home = () => {
     [debouncedSearch]
   );
 
-  // 🚀 Initial load + search
+  //Initial load + search
   useEffect(() => {
     fetchPosts(1, true);
   }, [debouncedSearch, fetchPosts]);
 
-  // 📄 Load more
+  //Load more
   useEffect(() => {
     if (page > 1) {
       fetchPosts(page);
     }
   }, [page, fetchPosts]);
 
-  // ⏳ Loading UI
+  //Loading UI
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
@@ -115,12 +96,11 @@ const Home = () => {
     );
   }
 
-  // ❌ Error UI
+  //Error UI
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-100 px-4 text-center">
         <p className="text-red-500 text-lg mb-4">{error}</p>
-
         <button
           onClick={() => {
             setPosts([]);
@@ -135,11 +115,10 @@ const Home = () => {
     );
   }
 
-  // 🎯 Main UI
+  //Main UI
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
-
         {/* 🔍 Search */}
         <div className="flex justify-center mb-6">
           <input
@@ -180,7 +159,6 @@ const Home = () => {
                 ? `No posts found for "${debouncedSearch}".`
                 : "No posts available yet."}
             </p>
-
             {!debouncedSearch && (
               <button
                 onClick={() => navigate("/create-post")}
