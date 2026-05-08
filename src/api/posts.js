@@ -1,81 +1,74 @@
 import { toast } from "react-toastify";
 import { get, post, put, remove } from "./axiosConfig.js";
 
-//SAFE WRAPPER (prevents app crash)
+// SAFE WRAPPER
 const safeRequest = async (apiCall) => {
   try {
-    return await apiCall();
+    const res = await apiCall();
+    return res.data;
   } catch (err) {
-    toast.error("API Error:", err?.response?.data || err.message);
+    toast.error(`API Error: ${err?.response?.data?.message || err.message}`);
     throw err?.response?.data || err;
   }
 };
 
-//POSTS
+// POSTS
+export const getAllPosts = () => safeRequest(() => get("/posts"));
 
-//Get all posts
-export const getAllPosts = () =>
-  safeRequest(() => get("/posts"));
+export const getPostBySlug = (slug) => safeRequest(() => get(`/posts/slug/${slug}`));
 
-//Get post by slug
-export const getPostBySlug = (slug) =>
-  safeRequest(() => get(`/posts/slug/${slug}`));
-
-//Create post
 export const createPost = (postData) =>
-  safeRequest(() => post("/posts", postData));
+  safeRequest(() => post("/posts", postData)).then((data) => {
+    toast.success("Post created successfully!");
+    return data;
+  });
 
-//Update post
-export const updatePost = (id, postData) =>
-  safeRequest(() => put(`/posts/${id}`, postData));
+  export const updatePost = (id, postData) =>
+  safeRequest(() => put(`/posts/${id}`, postData)).then((data) => {
+    toast.success("Post updated successfully!");
+    return data;
+  });
 
-//Delete post
-export const deletePost = (id) =>
-  safeRequest(() => remove(`/posts/${id}`));
+  export const deletePost = (id) =>
+  safeRequest(() => remove(`/posts/${id}`)).then((data) => {
+    toast.success("Post deleted successfully!");
+    return data;
+  });
 
-// Pagination + Search (FIXED query params)
+// Pagination + Search
 export const getPaginatedPosts = (page = 1, limit = 10, search = "") =>
   safeRequest(() =>
     get("/posts", {
-      page,
-      limit,
-      search,
+      params: { page, limit, search },
     })
   );
 
-//LIKES & COMMENTS
-
-// Toggle like/unlike
+// LIKES & COMMENTS
 export const toggleLikePost = (id) =>
-  safeRequest(() => put(`/posts/${id}/like`));
+  safeRequest(() => put(`/posts/${id}/like`)).then((data) => {
+    toast.success("Like toggled!");
+    return data;
+  });
 
-// Add comment
-export const addCommentToPost = (postId, text) =>
-  safeRequest(() =>
-    post(`/posts/${postId}/comments`, { text })
-  );
+  export const addCommentToPost = (postId, text) =>
+  safeRequest(() => post(`/posts/${postId}/comments`, { text })).then((data) => {
+    toast.success("Comment added!");
+    return data;
+  });
 
-// Get comments
-export const getCommentsByPost = (postId) =>
+  export const getCommentsByPost = (postId) =>
   safeRequest(() => get(`/posts/${postId}/comments`));
 
-// Delete comment
 export const deleteCommentFromPost = (postId, commentId) =>
-  safeRequest(() =>
-    remove(`/posts/${postId}/comments/${commentId}`)
-  );
+  safeRequest(() => remove(`/posts/${postId}/comments/${commentId}`)).then((data) => {
+    toast.success("Comment deleted!");
+    return data;
+  });
 
-//PROFILE
+// PROFILE
+export const getMyProfile = () => safeRequest(() => get("/auth/profile"));
 
-// Current user profile
-export const getMyProfile = () =>
-  safeRequest(() => get("/auth/profile"));
+export const getUserProfileById = (userId) => safeRequest(() => get(`/users/${userId}`));
 
-// Admin: get user by ID
-export const getUserProfileById = (userId) =>
-  safeRequest(() => get(`/users/${userId}`));
-
-//ANALYTICS
-
-export const getAnalytics = (id) =>
-  safeRequest(() => get(`/posts/${id}/analytics`));
+// ANALYTICS
+export const getAnalytics = (id) => safeRequest(() => get(`/posts/${id}/analytics`));

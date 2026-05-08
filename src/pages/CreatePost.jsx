@@ -128,60 +128,51 @@ const CreatePost = () => {
   // SUBMIT
   
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
+  if (!user || !token) {
+    setLoginMessage("⚠️ Please login again to create a post.");
+    return;
+  }
 
-    if (!user || !token) {
-      setLoginMessage("⚠️ Please login again to create a post.");
-      return;
+  const validationErrors = validate();
+  if (Object.keys(validationErrors).length > 0) {
+    setErrors(validationErrors);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", content);
+    selectedCategories.forEach((cat) => formData.append("categories[]", cat));
+    tags.forEach((tag) => formData.append("tags[]", tag));
+    if (image) formData.append("image", image);
+
+    await API.post("/posts", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    toast.success("Post created successfully!");
+    navigate("/");
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Failed to create post");
+    if (err.response?.status === 401) {
+      setLoginMessage("Session expired. Please login again.");
     }
+    setErrors({ api: err.response?.data?.message || "Post creation failed" });
+  } finally {
+    setLoading(false);
+  }
+};
 
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      let imageUrl = null;
-
-      if (image) {
-        toast.info("Uploading image...");
-        imageUrl = await uploadImage(image);
-        toast.success("Image uploaded");
-      }
-
-      const payload = {
-        title,
-        content,
-        categories: selectedCategories, // ✅ array
-        tags,
-        image: imageUrl,
-      };
-
-      await API.post("/posts", payload);
-
-      toast.success("Post created successfully!");
-      navigate("/");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to create post");
-
-      if (err.response?.status === 401) {
-        setLoginMessage("Session expired. Please login again.");
-      }
-
-      setErrors({
-        api: err.response?.data?.message || "Post creation failed",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // UI
+// UI
   
   return (
     <div className="max-w-3xl mx-auto mt-12 p-8 bg-white shadow-xl rounded-2xl">

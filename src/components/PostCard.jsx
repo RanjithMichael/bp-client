@@ -22,7 +22,7 @@ const PostCard = ({ post }) => {
 
   const [imageError, setImageError] = useState(false);
 
-  //FIXED Like State
+  //Like State
   const [likes, setLikes] = useState(post?.likes?.length ?? 0);
   const [liked, setLiked] = useState(
     post?.likes?.includes(user?._id) ?? false
@@ -39,7 +39,7 @@ const PostCard = ({ post }) => {
 
   const author = post?.author?.name || "Unknown Author";
   const username = post?.author?.username || "";
-  const avatar = post?.author?.avatar || "/images/default-avatar.png";
+  const avatar = post?.author?.profilePic || "/images/default-avatar.png";
 
   const date = post?.createdAt
     ? new Date(post.createdAt).toLocaleDateString("en-US", {
@@ -49,21 +49,17 @@ const PostCard = ({ post }) => {
       })
     : "Unknown Date";
 
-  const BASE_URL =
-    import.meta.env.VITE_API_URL || "https://bp-server-11.onrender.com/api";
-
+  //Use coverImage from backend
   const imageUrl =
-    !imageError && post.image
-      ? post.image.startsWith("http")
-        ? post.image
-        : `${BASE_URL.replace("/api", "")}/${post.image.replace(/\\/g, "/")}`
+    !imageError && post.coverImage
+      ? post.coverImage
       : "/default-post.png";
 
   const postUrl = `/post/${post.slug}`;
   const fullUrl = `${window.location.origin}${postUrl}`;
   const encodedTitle = encodeURIComponent(title);
 
-  //Share URLs
+  // Share URLs
   const shareUrls = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${fullUrl}`,
     twitter: `https://twitter.com/intent/tweet?url=${fullUrl}&text=${encodedTitle}`,
@@ -76,21 +72,19 @@ const PostCard = ({ post }) => {
     window.open(shareUrls[platform], "_blank", "noopener,noreferrer");
   };
 
-  //FIXED Like Handler
+  //Like Handler
   const handleLike = async () => {
     if (!user) {
-  toast.info("Please login to like posts");
-  return;
-}
+      toast.info("Please login to like posts");
+      return;
+    }
     if (liking) return;
 
     try {
       setLiking(true);
-
       const res = await toggleLikePost(post._id);
-
       setLikes(res.likesCount);
-      setLiked(res.liked);
+      setLiked(!liked); // toggle locally since backend doesn’t return "liked"
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to like post");
     } finally {
@@ -98,12 +92,11 @@ const PostCard = ({ post }) => {
     }
   };
 
-  //Latest comments preview
+  // Latest comments preview
   const latestComments = post?.comments?.slice(-2) || [];
 
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden flex flex-col">
-      
       {/* Image */}
       <Link to={postUrl}>
         <img
@@ -117,7 +110,6 @@ const PostCard = ({ post }) => {
 
       {/* Content */}
       <div className="p-5 flex flex-col flex-grow">
-        
         {/* Title */}
         <Link to={postUrl}>
           <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 line-clamp-2">
@@ -126,9 +118,7 @@ const PostCard = ({ post }) => {
         </Link>
 
         {/* Description */}
-        <p className="text-gray-700 text-sm mb-4 line-clamp-3">
-          {content}
-        </p>
+        <p className="text-gray-700 text-sm mb-4 line-clamp-3">{content}</p>
 
         {/* Comments Preview */}
         {latestComments.length > 0 && (
@@ -164,7 +154,6 @@ const PostCard = ({ post }) => {
         {/* Footer */}
         <footer className="flex justify-between items-end mt-auto">
           <div className="text-xs text-gray-500 space-y-2">
-
             {/* Author */}
             <div className="flex items-center gap-2">
               <img
@@ -191,7 +180,6 @@ const PostCard = ({ post }) => {
 
             {/* Actions */}
             <div className="flex items-center gap-3 mt-2 flex-wrap">
-
               {/* Like */}
               <button
                 onClick={handleLike}
