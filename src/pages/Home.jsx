@@ -31,60 +31,62 @@ const Home = () => {
 
   //Fetch posts
   const fetchPosts = useCallback(
-    async (pageToFetch = 1, reset = false) => {
-      try {
-        if (reset) setLoading(true);
-        else setLoadingMore(true);
+  async (pageToFetch = 1, reset = false) => {
+    try {
+      if (reset) setLoading(true);
+      else setLoadingMore(true);
 
-        const data = await getPaginatedPosts(pageToFetch, limit, debouncedSearch);
+      const data = await getPaginatedPosts(pageToFetch, limit, debouncedSearch);
 
-        //Normalize backend response
-        const rawPosts = Array.isArray(data?.posts)
-          ? data.posts
-          : Array.isArray(data?.data)
-          ? data.data
-          : [];
+      // Normalize backend response
+      const rawPosts = Array.isArray(data?.posts)
+        ? data.posts
+        : Array.isArray(data?.data)
+        ? data.data
+        : [];
 
-        if (!Array.isArray(rawPosts)) {
-          throw new Error("Invalid post data format");
-        }
-
-        //Prevent duplicates
-        setPosts((prev) => {
-          if (reset) return rawPosts;
-          const existingIds = new Set(prev.map((p) => p._id));
-          const newPosts = rawPosts.filter((p) => !existingIds.has(p._id));
-          return [...prev, ...newPosts];
-        });
-
-        setTotalPages(data?.totalPages || 1);
-        setError(null);
-      } catch (err) {
-        const message =
-          err?.response?.data?.message ||
-          err?.message ||
-          "Failed to fetch posts.";
-        toast.error(message);
-        setError(message);
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
+      if (!Array.isArray(rawPosts)) {
+        throw new Error("Invalid post data format");
       }
-    },
-    [debouncedSearch]
-  );
 
-  //Initial load + search
-  useEffect(() => {
-    fetchPosts(1, true);
-  }, [debouncedSearch, fetchPosts]);
+      setPosts((prev) => {
+        if (reset) return rawPosts; // fresh load
+        const existingIds = new Set(prev.map((p) => p._id));
+        const newPosts = rawPosts.filter((p) => !existingIds.has(p._id));
+        return [...prev, ...newPosts];
+      });
 
-  //Load more
-  useEffect(() => {
-    if (page > 1) {
-      fetchPosts(page);
+      // Pagination info
+      setTotalPages(data?.totalPages || 1);
+      setPage(pageToFetch); // keep page state in sync
+      setError(null);
+    } catch (err) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to fetch posts.";
+      toast.error(message);
+      setError(message);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-  }, [page, fetchPosts]);
+  },
+  [debouncedSearch, limit]
+);
+
+// Initial load + search
+useEffect(() => {
+  fetchPosts(1, true);
+}, [debouncedSearch, fetchPosts]);
+
+// Load more
+useEffect(() => {
+  if (page > 1) {
+    fetchPosts(page);
+  }
+}, [page, fetchPosts]);
+
 
   //Loading UI
   if (loading) {
