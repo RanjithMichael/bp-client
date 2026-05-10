@@ -73,24 +73,30 @@ const PostCard = ({ post }) => {
   };
 
   //Like Handler
-  const handleLike = async () => {
-    if (!user) {
-      toast.info("Please login to like posts");
-      return;
-    }
-    if (liking) return;
+ const handleLike = async () => {
+  if (!user) {
+    toast.info("Please login to like posts");
+    return;
+  }
+  if (liking) return;
 
-    try {
-      setLiking(true);
-      const res = await toggleLikePost(post._id);
-      setLikes(res.likesCount);
-      setLiked(!liked); // toggle locally since backend doesn’t return "liked"
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to like post");
-    } finally {
-      setLiking(false);
-    }
-  };
+  try {
+    setLiking(true);
+
+    // Call backend
+    const res = await toggleLikePost(post._id);
+
+    //Use backend fields directly
+    setLikes(res.likesCount);
+    setLiked(res.liked);
+
+    toast.success(res.liked ? "👍 Post liked!" : "👎 Like removed.");
+  } catch (err) {
+    toast.error(err?.response?.data?.message || "Failed to update like");
+  } finally {
+    setLiking(false);
+  }
+};
 
   // Latest comments preview
   const latestComments = post?.comments?.slice(-2) || [];

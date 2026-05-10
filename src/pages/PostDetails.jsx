@@ -70,25 +70,25 @@ const PostDetails = () => {
   try {
     setLiking(true);
 
-    //Backend returns { success, message, post }
-    const { data } = await API.put(`/posts/${post._id}/like`);
-    const updatedPost = data.post;
+    const { data } = await API.put(`/posts/${post._id}/like`, {}, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
+    });
 
-    setLikes(updatedPost.likes.length);
-    setLikedByUser(updatedPost.likes.some((id) => id.toString() === user._id));
+    //Use backend fields directly
+    setLikes(data.likesCount);
+    setLikedByUser(data.liked);
 
-    toast.success(
-      updatedPost.likes?.includes(user._id)
-        ? "👍 Post liked!"
-        : "👎 Like removed."
-    );
+    toast.success(data.liked ? "👍 Post liked!" : "👎 Like removed.");
   } catch (err) {
-    console.error("LIKE ERROR:", err.response);
+    console.error("LIKE ERROR:", err);
     toast.error(err.response?.data?.message || "Failed to update like.");
   } finally {
     setLiking(false);
   }
 };
+
+
+
   // Share
   const handleShare = async () => {
     if (!post) return;
