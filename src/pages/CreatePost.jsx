@@ -112,17 +112,21 @@ const CreatePost = () => {
       formData.append("content", content);
       selectedCategories.forEach((cat) => formData.append("categories[]", cat));
       tags.forEach((tag) => formData.append("tags[]", tag));
-      if (image) formData.append("image", image);
+      if (image) formData.append("image", image); // ✅ Cloudinary file
 
-      await API.post("/posts", formData, {
+      const res = await API.post("/posts", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
 
-      toast.success("Post created successfully!");
-      navigate("/");
+      if (res.data.success) {
+        toast.success("Post created successfully!");
+        navigate("/profile");
+      } else {
+        toast.error(res.data.message || "Failed to create post");
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to create post");
       if (err.response?.status === 401) {
@@ -232,7 +236,8 @@ const CreatePost = () => {
           {preview && <img src={preview} alt="Preview" className="mt-3 w-32 h-32 object-cover rounded" />}
         </div>
 
-                {/* SUBMIT */}
+        {/* SUBMIT */}
+
         <button
           type="submit"
           disabled={loading}

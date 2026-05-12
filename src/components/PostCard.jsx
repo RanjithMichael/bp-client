@@ -22,11 +22,9 @@ const PostCard = ({ post }) => {
 
   const [imageError, setImageError] = useState(false);
 
-  //Like State
-  const [likes, setLikes] = useState(post?.likes?.length ?? 0);
-  const [liked, setLiked] = useState(
-    post?.likes?.includes(user?._id) ?? false
-  );
+  // Like State
+  const [likes, setLikes] = useState(post?.likesCount ?? 0);
+  const [liked, setLiked] = useState(post?.liked ?? false);
   const [liking, setLiking] = useState(false);
 
   if (!post || !post.slug) return null;
@@ -49,9 +47,9 @@ const PostCard = ({ post }) => {
       })
     : "Unknown Date";
 
-  //Use coverImage from backend
+  // ✅ Use Cloudinary coverImage with fallback
   const imageUrl =
-    !imageError && post.coverImage
+    !imageError && post?.coverImage
       ? post.coverImage
       : "/default-post.png";
 
@@ -72,31 +70,31 @@ const PostCard = ({ post }) => {
     window.open(shareUrls[platform], "_blank", "noopener,noreferrer");
   };
 
-  //Like Handler
- const handleLike = async () => {
-  if (!user) {
-    toast.info("Please login to like posts");
-    return;
-  }
-  if (liking) return;
+  // Like Handler
+  const handleLike = async () => {
+    if (!user) {
+      toast.info("Please login to like posts");
+      return;
+    }
+    if (liking) return;
 
-  try {
-    setLiking(true);
+    try {
+      setLiking(true);
 
-    // Call backend
-    const res = await toggleLikePost(post._id);
+      // Call backend
+      const res = await toggleLikePost(post._id);
 
-    //Use backend fields directly
-    setLikes(res.likesCount);
-    setLiked(res.liked);
+      // ✅ Use backend fields directly
+      setLikes(res.likesCount);
+      setLiked(res.liked);
 
-    toast.success(res.liked ? "👍 Post liked!" : "👎 Like removed.");
-  } catch (err) {
-    toast.error(err?.response?.data?.message || "Failed to update like");
-  } finally {
-    setLiking(false);
-  }
-};
+      toast.success(res.liked ? "👍 Post liked!" : "👎 Like removed.");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to update like");
+    } finally {
+      setLiking(false);
+    }
+  };
 
   // Latest comments preview
   const latestComments = post?.comments?.slice(-2) || [];

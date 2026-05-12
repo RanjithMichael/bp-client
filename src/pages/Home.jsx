@@ -55,7 +55,10 @@ const Home = () => {
         const newPosts = rawPosts.filter((p) => !existingIds.has(p._id));
         return [...prev, ...newPosts];
       });
-
+      if (rawPosts.length > 0 && reset) {
+         toast.success("Posts loaded successfully!");
+      }
+    
       // Pagination info
       setTotalPages(data?.totalPages || 1);
       setPage(pageToFetch); // keep page state in sync
