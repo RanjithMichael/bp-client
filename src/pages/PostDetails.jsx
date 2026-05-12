@@ -180,11 +180,7 @@ const addComment = async (e) => {
 
   if (error) return <p className="text-center mt-4 text-red-500">{error}</p>;
 
-  const imageUrl = post?.image
-    ? post.image.startsWith("http")
-      ? post.image
-      : `${BASE_URL.replace("/api", "")}/${post.image.replace(/\\/g, "/")}`
-    : "/default-post.png";
+  const imageUrl = post?.coverImage || "/default-post.png";
 
   return (
     <div className="max-w-3xl mx-auto mt-6 px-4 pb-10">

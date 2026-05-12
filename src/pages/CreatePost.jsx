@@ -12,14 +12,10 @@ const CreatePost = () => {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-
-  // ✅ UPDATED CATEGORY STATE
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categoryInput, setCategoryInput] = useState("");
-
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
-
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState("");
   const [errors, setErrors] = useState({});
@@ -35,150 +31,113 @@ const CreatePost = () => {
   }, [image]);
 
   // CATEGORY HANDLING
-  
   const handleAddCategory = (e) => {
     if ((e.key === "Enter" || e.key === ",") && categoryInput.trim()) {
       e.preventDefault();
-
       const newCategory = categoryInput.trim().toLowerCase();
-
       if (selectedCategories.includes(newCategory)) {
         setCategoryInput("");
         return;
       }
-
       if (selectedCategories.length >= 5) {
         toast.error("Maximum 5 categories allowed");
         return;
       }
-
       setSelectedCategories((prev) => [...prev, newCategory]);
       setCategoryInput("");
     }
   };
-
   const removeCategory = (index) => {
     setSelectedCategories((prev) => prev.filter((_, i) => i !== index));
   };
 
   // TAG HANDLING
-  
   const handleAddTag = (e) => {
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
       e.preventDefault();
-
       const newTag = tagInput.trim().toLowerCase();
-
       if (tags.includes(newTag)) {
         setTagInput("");
         return;
       }
-
       if (tags.length >= 5) {
         toast.error("Maximum 5 tags allowed");
         return;
       }
-
       setTags((prev) => [...prev, newTag]);
       setTagInput("");
     }
   };
-
   const removeTag = (index) => {
     setTags((prev) => prev.filter((_, i) => i !== index));
   };
 
   // VALIDATION
-  
   const validate = () => {
     const newErrors = {};
-
     if (!title || title.trim().length < 5) {
       newErrors.title = "Title must be at least 5 characters.";
     }
-
-    const plainContent = content
-      .replace(/<[^>]+>/g, "")
-      .replace(/\s+/g, "")
-      .trim();
-
+    const plainContent = content.replace(/<[^>]+>/g, "").replace(/\s+/g, "").trim();
     if (!plainContent || plainContent.length < 20) {
       newErrors.content = "Content must be at least 20 characters.";
     }
-
     if (!selectedCategories.length) {
       newErrors.category = "At least one category is required.";
     }
-
     return newErrors;
   };
 
-  // IMAGE UPLOAD
-  const uploadImage = async (file) => {
-    const formData = new FormData();
-    formData.append("image", file);
+  // SUBMIT
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
 
-    const res = await API.post("/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    if (!user || !token) {
+      setLoginMessage("⚠️ Please login again to create a post.");
+      return;
+    }
 
-    return res.data.imageUrl;
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
+      selectedCategories.forEach((cat) => formData.append("categories[]", cat));
+      tags.forEach((tag) => formData.append("tags[]", tag));
+      if (image) formData.append("image", image);
+
+      await API.post("/posts", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      toast.success("Post created successfully!");
+      navigate("/");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to create post");
+      if (err.response?.status === 401) {
+        setLoginMessage("Session expired. Please login again.");
+      }
+      setErrors({ api: err.response?.data?.message || "Post creation failed" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // SUBMIT
-  
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  const token = localStorage.getItem("token");
-
-  if (!user || !token) {
-    setLoginMessage("⚠️ Please login again to create a post.");
-    return;
-  }
-
-  const validationErrors = validate();
-  if (Object.keys(validationErrors).length > 0) {
-    setErrors(validationErrors);
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    selectedCategories.forEach((cat) => formData.append("categories[]", cat));
-    tags.forEach((tag) => formData.append("tags[]", tag));
-    if (image) formData.append("image", image);
-
-    await API.post("/posts", formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    toast.success("Post created successfully!");
-    navigate("/");
-  } catch (err) {
-    toast.error(err.response?.data?.message || "Failed to create post");
-    if (err.response?.status === 401) {
-      setLoginMessage("Session expired. Please login again.");
-    }
-    setErrors({ api: err.response?.data?.message || "Post creation failed" });
-  } finally {
-    setLoading(false);
-  }
-};
-
-// UI
-  
+  // UI
   return (
     <div className="max-w-3xl mx-auto mt-12 p-8 bg-white shadow-xl rounded-2xl">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        ✍️ Create New Post
-      </h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">✍️ Create New Post</h1>
 
       {errors.api && (
         <div className="mb-4 p-3 rounded bg-red-100 text-red-700 text-sm">
@@ -198,26 +157,19 @@ const CreatePost = () => {
             disabled={loading}
             className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
-          {errors.title && (
-            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-          )}
+          {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
         </div>
 
         {/* CONTENT */}
         <div>
           <label className="block mb-2 font-medium">Content</label>
           <ReactQuill value={content} onChange={setContent} />
-          {errors.content && (
-            <p className="text-red-500 text-sm mt-1">{errors.content}</p>
-          )}
+          {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content}</p>}
         </div>
 
-        {/* ✅ UPDATED CATEGORY UI */}
+        {/* CATEGORIES */}
         <div>
-          <label className="block mb-2 font-medium">
-            Categories (Press Enter or comma)
-          </label>
-
+          <label className="block mb-2 font-medium">Categories (Press Enter or comma)</label>
           <input
             type="text"
             placeholder="Type a category and press Enter..."
@@ -226,7 +178,6 @@ const CreatePost = () => {
             onKeyDown={handleAddCategory}
             className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
-
           <div className="flex flex-wrap gap-2 mt-3">
             {selectedCategories.map((cat, index) => (
               <span
@@ -234,28 +185,18 @@ const CreatePost = () => {
                 className="flex items-center gap-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm"
               >
                 {cat}
-                <button
-                  type="button"
-                  onClick={() => removeCategory(index)}
-                  className="text-white hover:text-gray-200"
-                >
+                <button type="button" onClick={() => removeCategory(index)} className="text-white hover:text-gray-200">
                   ✕
                 </button>
               </span>
             ))}
           </div>
-
-          {errors.category && (
-            <p className="text-red-500 text-sm mt-1">{errors.category}</p>
-          )}
+          {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
         </div>
 
         {/* TAGS */}
         <div>
-          <label className="block mb-2 font-medium">
-            Tags (Press Enter or comma)
-          </label>
-
+          <label className="block mb-2 font-medium">Tags (Press Enter or comma)</label>
           <input
             type="text"
             placeholder="Type a tag and press Enter..."
@@ -264,7 +205,6 @@ const CreatePost = () => {
             onKeyDown={handleAddTag}
             className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
-
           <div className="flex flex-wrap gap-2 mt-3">
             {tags.map((tag, index) => (
               <span
@@ -272,11 +212,7 @@ const CreatePost = () => {
                 className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm"
               >
                 {tag}
-                <button
-                  type="button"
-                  onClick={() => removeTag(index)}
-                  className="text-white hover:text-gray-200"
-                >
+                <button type="button" onClick={() => removeTag(index)} className="text-white hover:text-gray-200">
                   ✕
                 </button>
               </span>
@@ -293,16 +229,10 @@ const CreatePost = () => {
             onChange={(e) => setImage(e.target.files[0])}
             className="w-full border p-3 rounded-lg"
           />
-          {preview && (
-            <img
-              src={preview}
-              alt="Preview"
-              className="mt-3 w-32 h-32 object-cover rounded"
-            />
-          )}
+          {preview && <img src={preview} alt="Preview" className="mt-3 w-32 h-32 object-cover rounded" />}
         </div>
 
-        {/* SUBMIT */}
+                {/* SUBMIT */}
         <button
           type="submit"
           disabled={loading}
@@ -311,8 +241,16 @@ const CreatePost = () => {
           {loading ? "Creating..." : "Publish Post"}
         </button>
       </form>
+
+      {/* LOGIN MESSAGE */}
+      {loginMessage && (
+        <div className="mt-4 p-3 rounded bg-yellow-100 text-yellow-700 text-sm">
+          {loginMessage}
+        </div>
+      )}
     </div>
   );
 };
 
 export default CreatePost;
+
