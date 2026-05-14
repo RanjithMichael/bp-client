@@ -11,4 +11,4 @@ export const updateUserProfile = (profileData) =>
 export const getMyPosts = () => get("/users/myposts");
 
 // Get posts by a specific user (public route)
-export const getUserPosts = (userId) => get(`/users/${userId}/posts`);
+export const getUserPosts = (userId) => get(`/posts/user/${userId}`);

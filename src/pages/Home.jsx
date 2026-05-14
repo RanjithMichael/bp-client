@@ -19,7 +19,7 @@ const Home = () => {
   const limit = 6;
   const navigate = useNavigate();
 
-  //Debounce search
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search.trim());
@@ -29,70 +29,69 @@ const Home = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  //Fetch posts
+  // Fetch posts
   const fetchPosts = useCallback(
-  async (pageToFetch = 1, reset = false) => {
-    try {
-      if (reset) setLoading(true);
-      else setLoadingMore(true);
+    async (pageToFetch = 1, reset = false) => {
+      try {
+        if (reset) setLoading(true);
+        else setLoadingMore(true);
 
-      const data = await getPaginatedPosts(pageToFetch, limit, debouncedSearch);
-      
+        const data = await getPaginatedPosts(pageToFetch, limit, debouncedSearch);
 
-      // Normalize backend response
-      const rawPosts = Array.isArray(data?.posts)
-        ? data.posts
-        : Array.isArray(data?.data)
-        ? data.data
-        : [];
+        // Normalize backend response
+        const rawPosts = Array.isArray(data?.posts)
+          ? data.posts
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
 
-      if (!Array.isArray(rawPosts)) {
-        throw new Error("Invalid post data format");
+        if (!Array.isArray(rawPosts)) {
+          throw new Error("Invalid post data format");
+        }
+
+        setPosts((prev) => {
+          if (reset) return rawPosts; // fresh load
+          const existingIds = new Set(prev.map((p) => p._id));
+          const newPosts = rawPosts.filter((p) => !existingIds.has(p._id));
+          return [...prev, ...newPosts];
+        });
+
+        if (rawPosts.length > 0 && reset) {
+          toast.success("Posts loaded successfully!");
+        }
+
+        // Pagination info
+        setTotalPages(data?.totalPages || 1);
+        setPage(pageToFetch); // keep page state in sync
+        setError(null);
+      } catch (err) {
+        const message =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to fetch posts.";
+        toast.error(message);
+        setError(message);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
+    },
+    [debouncedSearch, limit]
+  );
 
-      setPosts((prev) => {
-        if (reset) return rawPosts; // fresh load
-        const existingIds = new Set(prev.map((p) => p._id));
-        const newPosts = rawPosts.filter((p) => !existingIds.has(p._id));
-        return [...prev, ...newPosts];
-      });
-      if (rawPosts.length > 0 && reset) {
-         toast.success("Posts loaded successfully!");
-      }
-    
-      // Pagination info
-      setTotalPages(data?.totalPages || 1);
-      setPage(pageToFetch); // keep page state in sync
-      setError(null);
-    } catch (err) {
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to fetch posts.";
-      toast.error(message);
-      setError(message);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
+  // Initial load + search
+  useEffect(() => {
+    fetchPosts(1, true);
+  }, [debouncedSearch, fetchPosts]);
+
+  // Load more
+  useEffect(() => {
+    if (page > 1) {
+      fetchPosts(page);
     }
-  },
-  [debouncedSearch, limit]
-);
+  }, [page, fetchPosts]);
 
-// Initial load + search
-useEffect(() => {
-  fetchPosts(1, true);
-}, [debouncedSearch, fetchPosts]);
-
-// Load more
-useEffect(() => {
-  if (page > 1) {
-    fetchPosts(page);
-  }
-}, [page, fetchPosts]);
-
-
-  //Loading UI
+  // Loading UI
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
@@ -102,7 +101,7 @@ useEffect(() => {
     );
   }
 
-  //Error UI
+  // Error UI
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-100 px-4 text-center">
@@ -121,7 +120,7 @@ useEffect(() => {
     );
   }
 
-  //Main UI
+  // Main UI
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
