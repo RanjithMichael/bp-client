@@ -180,7 +180,7 @@ const addComment = async (e) => {
 
   if (error) return <p className="text-center mt-4 text-red-500">{error}</p>;
 
-  const imageUrl = post?.coverImage || "/default-post.png";
+  const imageUrl = post?.coverImage || "https://res.cloudinary.com/djle175hb/image/upload/v1778771435/DALL_C2_B7E-2025-02-11-18.59.04-A-modern-and-professional-illustration-depicting-a-computer-programmer-working-on-code.-The-image-should-feature-a-clean-workspace-with-a-laptop-displ_vkl7n2.webp";
 
   return (
     <div className="max-w-3xl mx-auto mt-6 px-4 pb-10">
@@ -188,7 +188,7 @@ const addComment = async (e) => {
         src={imageUrl}
         alt={post?.title}
         className="w-full h-64 object-cover rounded-lg shadow-md mb-6"
-        onError={(e) => (e.target.src = "/default-post.png")}
+        onError={(e) => (e.target.src = "https://res.cloudinary.com/djle175hb/image/upload/v1778771435/DALL_C2_B7E-2025-02-11-18.59.04-A-modern-and-professional-illustration-depicting-a-computer-programmer-working-on-code.-The-image-should-feature-a-clean-workspace-with-a-laptop-displ_vkl7n2.webp")}
       />
 
       <h1 className="text-3xl font-bold mb-4 text-gray-900">{post?.title}</h1>
