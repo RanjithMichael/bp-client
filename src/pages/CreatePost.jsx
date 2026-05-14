@@ -24,11 +24,14 @@ const CreatePost = () => {
 
   // IMAGE PREVIEW
   useEffect(() => {
-    if (!image) return;
-    const objectUrl = URL.createObjectURL(image);
-    setPreview(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [image]);
+  if (!image) return;
+
+  const objectUrl = URL.createObjectURL(image);
+
+  setPreview(objectUrl);
+
+  return () => URL.revokeObjectURL(objectUrl);
+}, [image]);
 
   // CATEGORY HANDLING
   const handleAddCategory = (e) => {
