@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import PostCard from "../components/PostCard";
-import { getPaginatedPosts } from "../api/posts.js";
+import { getPaginatedPosts } from "../api/posts";
 import { toast } from "react-toastify";
 
 const Home = () => {
@@ -37,6 +37,7 @@ const Home = () => {
       else setLoadingMore(true);
 
       const data = await getPaginatedPosts(pageToFetch, limit, debouncedSearch);
+      
 
       // Normalize backend response
       const rawPosts = Array.isArray(data?.posts)

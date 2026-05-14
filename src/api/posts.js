@@ -36,7 +36,11 @@ export const createPost = (postData) =>
   });
 
 // Pagination + Search
-export const getPaginatedPosts = (page = 1, limit = 10, search = "") =>
+export const getPaginatedPosts = (
+  page = 1,
+  limit = 10,
+  search = ""
+) =>
   safeRequest(() =>
     get("/posts", {
       params: { page, limit, search },

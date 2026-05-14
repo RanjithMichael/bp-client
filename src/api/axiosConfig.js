@@ -131,24 +131,17 @@ API.interceptors.response.use(
 
 //HELPER METHODS
 
-export const get = async (url, params = {}) => {
-  const { data } = await API.get(url, { params });
-  return data;
+export const get = async (url, config = {}) => {
+  return await API.get(url, config);
 };
 
-export const post = async (url, body) => {
-  const { data } = await API.post(url, body);
-  return data;
-};
+export const post = (url, data, config = {}) =>
+  API.post(url, data, config);
 
-export const put = async (url, body) => {
-  const { data } = await API.put(url, body);
-  return data;
-};
+export const put = (url, data, config = {}) =>
+  API.put(url, data, config);
 
-export const remove = async (url) => {
-  const { data } = await API.delete(url);
-  return data;
-};
+export const remove = (url, config = {}) =>
+  API.delete(url, config);
 
 export default API;
