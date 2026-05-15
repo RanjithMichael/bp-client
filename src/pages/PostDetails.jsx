@@ -6,6 +6,20 @@ import SubscribeButton from "../components/SubscribeButton";
 import AnalyticsChart from "../components/AnalyticsChart";
 import { toast } from "react-toastify";
 
+// Map of category-specific fallback images
+const categoryFallback = {
+  datascientist: "https://res.cloudinary.com/djle175hb/image/upload/v1778841309/0_gMvS7ZBIoCX8-Mqe_emfljf.jpg",
+  businessanalyst: "https://res.cloudinary.com/djle175hb/image/upload/v1778841394/https_3A_2F_2Fwww.hbs.edu_2Fctfassets_2Fpublic_2Fimages_2F5zdIhFfQlGehyJLZCR11FB_2FBA_2520Image_sopvyb.webp",
+  computercoding: "https://res.cloudinary.com/djle175hb/image/upload/v1778841533/7200_myugxi.jpg",
+  machinelearning: "https://res.cloudinary.com/djle175hb/image/upload/v1778841707/what-is-machine-learning-1024x683_vbjhb6.png",
+  ai: "https://res.cloudinary.com/djle175hb/image/upload/v1778841815/where-is-ai-used_vbmbey.jpg",
+  htmlandcss: "https://res.cloudinary.com/djle175hb/image/upload/v1778841882/1_lJ32Bl-lHWmNMUSiSq17gQ_erfbwd.png",
+  webdevelopment: "https://res.cloudinary.com/djle175hb/image/upload/v1778842008/1_V-Jp13LvtVc2IiY2fp4qYw_n6djkw.jpg",
+  mobileappdevelopement: "https://res.cloudinary.com/djle175hb/image/upload/v1778842101/7115055_1997_2_ldotl5.jpg",
+  cybersecurity: "https://res.cloudinary.com/djle175hb/image/upload/v1778842174/Cybersecurity_certiprof_t8uqpa.jpg",
+  default: "https://res.cloudinary.com/djle175hb/image/upload/v1778771435/DALL_C2_B7E-2025-02-11-18.59.04-A-modern-and-professional-illustration-depicting-a-computer-programmer-working-on-code.-The-image-should-feature-a-clean-workspace-with-a-laptop-displ_vkl7n2.webp"
+};
+
 const PostDetails = () => {
   const { slug } = useParams();
   const { user, loading: authLoading } = useContext(AuthContext);
@@ -24,70 +38,73 @@ const PostDetails = () => {
 
   // Fetch post
   useEffect(() => {
-  if (!slug || authLoading) return;
+    if (!slug || authLoading) return;
 
-  const fetchPost = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    const fetchPost = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      //Backend returns { success, post }
-      const { data } = await API.get(`/posts/slug/${slug}`);
-      const fetchedPost = data.post;
+        const { data } = await API.get(`/posts/slug/${slug}`);
+        const fetchedPost = data.post;
 
-      if (!fetchedPost) {
-        setError("Post not found.");
-        return;
+        if (!fetchedPost) {
+          setError("Post not found.");
+          return;
+        }
+
+        setPost(fetchedPost);
+        setLikes(fetchedPost.likesCount ?? fetchedPost.likes?.length ?? 0);
+        setShares(fetchedPost.sharesCount ?? fetchedPost.shares ?? 0);
+        setComments(fetchedPost.comments || []);
+        setLikedByUser(user ? fetchedPost.likes?.includes(user._id) : false);
+      } catch (err) {
+        toast.error(
+          err.response?.data?.message ||
+            "Failed to load the post. Please try again later."
+        );
+        setError(
+          err.response?.status === 404
+            ? "Post not found or may have been removed."
+            : "Failed to load the post. Please try again later."
+        );
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setPost(fetchedPost);
-      setLikes(fetchedPost.likesCount ?? fetchedPost.likes?.length ?? 0);
-      setShares(fetchedPost.sharesCount ?? fetchedPost.shares ?? 0);
-      setComments(fetchedPost.comments || []);
-      setLikedByUser(user ? fetchedPost.likes?.includes(user._id) : false);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to load the post. Please try again later.");
-      setError(
-        err.response?.status === 404
-          ? "Post not found or may have been removed."
-          : "Failed to load the post. Please try again later."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchPost();
-}, [slug, user, authLoading]);
+    fetchPost();
+  }, [slug, user, authLoading]);
 
   // Like/unlike
   const toggleLike = async () => {
-  if (!user || !post) {
-    toast.info("Please login to like this post.");
-    return;
-  }
+    if (!user || !post) {
+      toast.info("Please login to like this post.");
+      return;
+    }
 
-  try {
-    setLiking(true);
+    try {
+      setLiking(true);
 
-    const { data } = await API.put(`/posts/${post._id}/like`, {}, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
-    });
+      const { data } = await API.put(
+        `/posts/${post._id}/like`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+        }
+      );
 
-    //Use backend fields directly
-    setLikes(data.likesCount);
-    setLikedByUser(data.liked);
+      setLikes(data.likesCount);
+      setLikedByUser(data.liked);
 
-    toast.success(data.liked ? "👍 Post liked!" : "👎 Like removed.");
-  } catch (err) {
-    console.error("LIKE ERROR:", err);
-    toast.error(err.response?.data?.message || "Failed to update like.");
-  } finally {
-    setLiking(false);
-  }
-};
-
-
+      toast.success(data.liked ? "👍 Post liked!" : "👎 Like removed.");
+    } catch (err) {
+      console.error("LIKE ERROR:", err);
+      toast.error(err.response?.data?.message || "Failed to update like.");
+    } finally {
+      setLiking(false);
+    }
+  };
 
   // Share
   const handleShare = async () => {
@@ -96,7 +113,6 @@ const PostDetails = () => {
       const shareUrl = `${window.location.origin}/post/${post.slug}`;
       await navigator.clipboard.writeText(shareUrl);
 
-      // Ideally call backend increment route here
       setShares((prev) => prev + 1);
 
       toast.info("🔗 Post link copied to clipboard!");
@@ -106,68 +122,58 @@ const PostDetails = () => {
   };
 
   // Add comment
-const addComment = async (e) => {
-  e.preventDefault();
-  const text = e.target.comment?.value;
-  if (!text?.trim() || !post) return;
+  const addComment = async (e) => {
+    e.preventDefault();
+    const text = e.target.comment?.value;
+    if (!text?.trim() || !post) return;
 
-  try {
-    //Backend returns { success, message, post }
-    const { data } = await API.post(`/posts/${post._id}/comments`, { text });
-    const updatedPost = data.post;
+    try {
+      const { data } = await API.post(`/posts/${post._id}/comments`, { text });
+      const updatedPost = data.post;
 
-    setComments(updatedPost.comments || []);
-    e.target.reset();
-    toast.success("💬 Comment added!");
-  } catch (err) {
-    toast.error(err.response?.data?.message || "Failed to add comment.");
-  }
-};
-  //Delete comment
-  const handleDeleteComment = async (commentId) => {
-  if (!user) {
-    toast.info("Please login to delete comments.");
-    return;
-  }
-
-  if (!commentId) {
-    toast.error("Invalid comment ID");
-    return;
-  }
-
-  try {
-    //Debug (optional)
-    console.log("Deleting comment:", commentId);
-
-    const { data } = await API.delete(`/comments/${commentId}`);
-
-    if (data?.success) {
-      //Prefer backend response if available
-      if (data?.post?.comments) {
-        setComments(data.post.comments);
-      } else {
-        //Fallback (optimistic UI)
-        setComments((prev) =>
-          prev.filter((c) => c._id !== commentId)
-        );
-      }
-
-      toast.success(data.message || "🗑️ Comment deleted!");
-    } else {
-      toast.error(data?.message || "Failed to delete comment.");
+      setComments(updatedPost.comments || []);
+      e.target.reset();
+      toast.success("💬 Comment added!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to add comment.");
     }
-  } catch (err) {
-    console.error("Delete comment error:", err);
+  };
 
-    const message =
-      err?.response?.data?.message ||
-      err?.message ||
-      "Failed to delete comment.";
+  // Delete comment
+  const handleDeleteComment = async (commentId) => {
+    if (!user) {
+      toast.info("Please login to delete comments.");
+      return;
+    }
 
-    toast.error(message);
-  }
-};
+    if (!commentId) {
+      toast.error("Invalid comment ID");
+      return;
+    }
 
+    try {
+      const { data } = await API.delete(`/comments/${commentId}`);
+
+      if (data?.success) {
+        if (data?.post?.comments) {
+          setComments(data.post.comments);
+        } else {
+          setComments((prev) => prev.filter((c) => c._id !== commentId));
+        }
+
+        toast.success(data.message || "🗑️ Comment deleted!");
+      } else {
+        toast.error(data?.message || "Failed to delete comment.");
+      }
+    } catch (err) {
+      console.error("Delete comment error:", err);
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to delete comment.";
+      toast.error(message);
+    }
+  };
 
   if (loading) {
     return (
@@ -180,7 +186,12 @@ const addComment = async (e) => {
 
   if (error) return <p className="text-center mt-4 text-red-500">{error}</p>;
 
-  const imageUrl = post?.coverImage || "https://res.cloudinary.com/djle175hb/image/upload/v1778771435/DALL_C2_B7E-2025-02-11-18.59.04-A-modern-and-professional-illustration-depicting-a-computer-programmer-working-on-code.-The-image-should-feature-a-clean-workspace-with-a-laptop-displ_vkl7n2.webp";
+  // ✅ Use backend coverImage with category fallback
+  const primaryCategory = post?.categories?.[0]?.toLowerCase();
+  const imageUrl =
+    post?.coverImage ||
+    categoryFallback[primaryCategory] ||
+    categoryFallback.generic;
 
   return (
     <div className="max-w-3xl mx-auto mt-6 px-4 pb-10">
@@ -188,7 +199,7 @@ const addComment = async (e) => {
         src={imageUrl}
         alt={post?.title}
         className="w-full h-64 object-cover rounded-lg shadow-md mb-6"
-        onError={(e) => (e.target.src = "https://res.cloudinary.com/djle175hb/image/upload/v1778771435/DALL_C2_B7E-2025-02-11-18.59.04-A-modern-and-professional-illustration-depicting-a-computer-programmer-working-on-code.-The-image-should-feature-a-clean-workspace-with-a-laptop-displ_vkl7n2.webp")}
+        onError={(e) => (e.target.src = categoryFallback.generic)}
       />
 
       <h1 className="text-3xl font-bold mb-4 text-gray-900">{post?.title}</h1>
@@ -253,24 +264,28 @@ const addComment = async (e) => {
       </form>
 
       <div className="mt-4">
-  {comments.filter(c => !c.isDeleted).map((c) => (
-    <div key={c._id} className="border-b py-2 text-gray-700 flex justify-between items-center">
-      <span>
-        <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
-      </span>
-      {user && (user._id === c.user?._id || user.role === "admin") && (
-        <button
-          onClick={() => handleDeleteComment(c._id)}
-          className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
-        >
-          🗑️ Delete
-        </button>
-      )}
-    </div>
-  ))}
-</div>
+        {comments.filter((c) => !c.isDeleted).map((c) => (
+                    <div
+            key={c._id}
+            className="border-b py-2 text-gray-700 flex justify-between items-center"
+          >
+            <span>
+              <strong>{c.user?.name || "Anonymous"}:</strong> {c.text}
+            </span>
+            {user && (user._id === c.user?._id || user.role === "admin") && (
+              <button
+                onClick={() => handleDeleteComment(c._id)}
+                className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
+              >
+                🗑️ Delete
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
 export default PostDetails;
+
