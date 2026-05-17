@@ -75,7 +75,7 @@ const Profile = () => {
         // 2. Fetch Posts (Wrapped in its own try/catch so profile doesn't break if posts fail)
         try {
           const userPosts = await getUserPosts(profileUser._id);
-          const rawPosts = userPosts?.posts || userPosts || [];
+          const rawPosts = userPosts?.posts || userPosts.data || [];
           
           if (Array.isArray(rawPosts)) {
             const validPosts = rawPosts.filter(
