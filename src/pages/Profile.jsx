@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import PostCard from "../components/PostCard";
-import { get, put } from "../api/axiosConfig";
+import API, { get } from "../api/axiosConfig";  
 import { getUserPosts } from "../api/users.js";
 import { toast } from "react-toastify";
 
@@ -29,14 +29,11 @@ const Profile = () => {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!user) navigate("/login");
   }, [user, navigate]);
 
-  // Fetch profile & posts
   useEffect(() => {
-    // Only proceed if the user context exists
     if (!user) return;
 
     const fetchProfileAndPosts = async () => {
@@ -44,13 +41,10 @@ const Profile = () => {
         setLoading(true);
         setError(null);
 
-        // 1. Fetch Profile Data
         const res = await get("/auth/profile");
         console.log("Full API Response:", res);
-        // Try every possible way to find the user object
         const profileUser = res.data.user;
 
-        // NEW: If the API fails but we have the context user, use that!
         const finalUser = (profileUser && (profileUser._id || profileUser.id)) 
                           ? profileUser 
                           : user;
@@ -72,7 +66,6 @@ const Profile = () => {
           },
         });
 
-        // 2. Fetch Posts (Wrapped in its own try/catch so profile doesn't break if posts fail)
         try {
           const rawPosts = await getUserPosts(profileUser._id);
           console.log("Posts response:", rawPosts);
@@ -101,8 +94,10 @@ const Profile = () => {
   }, [user]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (["website", "twitter", "linkedin", "github"].includes(name)) {
+    const { name, value, files } = e.target;
+    if (name === "profilePic" && files?.length > 0) {
+      setFormData((prev) => ({ ...prev, profilePic: files[0] }));   // ✅ File input handling
+    } else if (["website", "twitter", "linkedin", "github"].includes(name)) {
       setFormData((prev) => ({
         ...prev,
         socialLinks: { ...prev.socialLinks, [name]: value },
@@ -115,9 +110,25 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const updatedRes = await put("/auth/profile", formData);
-      const updatedUser = updatedRes?.user || updatedRes;
-      setProfile(updatedUser);
+      const formDataObj = new FormData();
+      formDataObj.append("name", formData.name);
+      formDataObj.append("bio", formData.bio);
+
+      if (formData.profilePic instanceof File) {
+        formDataObj.append("profilePic", formData.profilePic);
+      } else if (typeof formData.profilePic === "string") {
+        formDataObj.append("profilePic", formData.profilePic);
+      }
+
+      Object.keys(formData.socialLinks).forEach((key) => {
+        formDataObj.append(`socialLinks[${key}]`, formData.socialLinks[key]);
+      });
+
+      const updatedRes = await API.put("/auth/profile", formDataObj, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setProfile(updatedRes.data.user);
       setEditing(false);
       setSuccessMsg("✅ Profile updated successfully!");
       setTimeout(() => setSuccessMsg(""), 3000);
@@ -161,36 +172,93 @@ const Profile = () => {
           <p className="text-gray-600 mb-2">Email: {profile?.email}</p>
 
           {editing ? (
-            <form onSubmit={handleSubmit} className="space-y-3 mt-4">
-              <input name="name" value={formData.name} onChange={handleChange} placeholder="Name" className="w-full border p-2 rounded" />
-              <input name="bio" value={formData.bio} onChange={handleChange} placeholder="Bio" className="w-full border p-2 rounded" />
-              <input name="profilePic" value={formData.profilePic} onChange={handleChange} placeholder="Profile picture URL" className="w-full border p-2 rounded" />
-              
-              <div className="grid grid-cols-2 gap-2">
-                {Object.keys(formData.socialLinks).map((field) => (
-                  <input key={field} name={field} value={formData.socialLinks[field]} onChange={handleChange} placeholder={field} className="w-full border p-2 rounded" />
-                ))}
-              </div>
+  <form onSubmit={handleSubmit} className="space-y-3 mt-4">
+    <input
+      name="name"
+      value={formData.name}
+      onChange={handleChange}
+      placeholder="Name"
+      className="w-full border p-2 rounded"
+    />
+    <input
+      name="bio"
+      value={formData.bio}
+      onChange={handleChange}
+      placeholder="Bio"
+      className="w-full border p-2 rounded"
+    />
 
-              <div className="flex gap-2">
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">Save</button>
-                <button type="button" onClick={() => setEditing(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-              </div>
-              {successMsg && <p className="text-green-600">{successMsg}</p>}
-            </form>
-          ) : (
-            <>
-              {profile?.bio && <p className="text-gray-700 mt-2">Bio: {profile.bio}</p>}
-              <img 
-                src={profile?.profilePic || "/default-avatar.png"} 
-                alt="Profile" 
-                className="w-32 h-32 rounded-full mt-3 object-cover border"
-                onError={(e) => { e.target.src = "/default-avatar.png"; }}
-              />
-              <button onClick={() => setEditing(true)} className="bg-blue-600 text-white px-4 py-2 rounded mt-4">Edit Profile</button>
-            </>
-          )}
-        </div>
+    {/* ✅ Cloudinary Upload Widget Button */}
+    <button
+      type="button"
+      onClick={() => {
+        window.cloudinary.openUploadWidget(
+          {
+            cloudName: "djle175hb",        
+            uploadPreset: "profile_preset",  
+            sources: ["local", "url", "camera"],
+            multiple: false,
+            folder: "profile_pics",
+            cropping: true, // optional
+          },
+          (error, result) => {
+            if (!error && result.event === "success") {
+              setFormData((prev) => ({
+                ...prev,
+                profilePic: result.info.secure_url, // ✅ Cloudinary URL
+              }));
+            }
+          }
+        );
+      }}
+      className="bg-purple-600 text-white px-4 py-2 rounded"
+    >
+      Upload Profile Picture
+    </button>
+
+    <div className="grid grid-cols-2 gap-2">
+      {Object.keys(formData.socialLinks).map((field) => (
+        <input
+          key={field}
+          name={field}
+          value={formData.socialLinks[field]}
+          onChange={handleChange}
+          placeholder={field}
+          className="w-full border p-2 rounded"
+        />
+      ))}
+    </div>
+
+    <div className="flex gap-2">
+      <button
+        type="submit"
+        className="bg-green-600 text-white px-4 py-2 rounded"
+      >
+        Save
+      </button>
+      <button
+        type="button"
+        onClick={() => setEditing(false)}
+        className="bg-gray-400 text-white px-4 py-2 rounded"
+      >
+        Cancel
+      </button>
+    </div>
+    {successMsg && <p className="text-green-600">{successMsg}</p>}
+  </form>
+) : (
+<>
+{profile?.bio && <p className="text-gray-700 mt-2">Bio: {profile.bio}</p>}
+  <img 
+   src={profile?.profilePic || "/default-avatar.png"} 
+   alt="Profile" 
+   className="w-32 h-32 rounded-full mt-3 object-cover border"
+   onError={(e) => { e.target.src = "/default-avatar.png"; }}
+  />
+    <button onClick={() => setEditing(true)} className="bg-blue-600 text-white px-4 py-2 rounded mt-4">Edit Profile</button>
+  </>
+  )}
+ </div>
 
         {/* POSTS SECTION */}
         <div>
