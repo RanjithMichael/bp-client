@@ -48,7 +48,7 @@ const Profile = () => {
         const res = await get("/auth/profile");
         console.log("Full API Response:", res);
         // Try every possible way to find the user object
-        const profileUser = res?.user || res?.data?.user || res?.data || res;
+        const profileUser = res.data.user;
 
         // NEW: If the API fails but we have the context user, use that!
         const finalUser = (profileUser && (profileUser._id || profileUser.id)) 
@@ -74,9 +74,9 @@ const Profile = () => {
 
         // 2. Fetch Posts (Wrapped in its own try/catch so profile doesn't break if posts fail)
         try {
-          const userPosts = await getUserPosts(profileUser._id);
-          const rawPosts = userPosts?.posts || userPosts.data || [];
-          
+          const rawPosts = await getUserPosts(profileUser._id);
+          console.log("Posts response:", rawPosts);
+
           if (Array.isArray(rawPosts)) {
             const validPosts = rawPosts.filter(
               (post) => post && post._id && post.isDeleted !== true

@@ -65,8 +65,12 @@ API.interceptors.response.use(
     }
 
     //HANDLE 401 (TOKEN EXPIRED)
-    
-    if (status === 401 && !originalRequest._retry) {
+    if (
+       status === 401 &&
+       !originalRequest._retry &&
+       (error.response.data?.code === "TOKEN_EXPIRED" ||
+        error.response.data?.message?.toLowerCase().includes("expired"))
+    ) {
       originalRequest._retry = true;
 
       //If already refreshing → queue requests
