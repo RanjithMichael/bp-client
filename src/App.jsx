@@ -18,7 +18,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AuthorPage from "./pages/AuthorPage";
 import Analytics from "./pages/Analytics";
-import Dashboard from "./pages/Dashboard"; 
+import Dashboard from "./pages/Dashboard";
+import EditPost from "./pages/EditPost";
 
 function App() {
   return (
@@ -55,6 +56,15 @@ function App() {
                     <CreatePost />
                   </ProtectedRoute>
                 }
+              />
+              {/* ✅ Edit Post Route (protected) */}
+              <Route
+                path="/post/:id/edit"
+                element={
+                <ProtectedRoute>
+                <EditPost />
+                </ProtectedRoute>
+              }
               />
               <Route
                 path="/profile"

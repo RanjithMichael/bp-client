@@ -31,7 +31,6 @@ const categoryFallback = {
   "generic": "https://res.cloudinary.com/djle175hb/image/upload/v1778771435/DALL_C2_B7E-2025-02-11-18.59.04-A-modern-and-professional-illustration-depicting-a-computer-programmer-working-on-code.-The-image-should-feature-a-clean-workspace-with-a-laptop-displ_vkl7n2.webp"
 };
 
-
 const PostCard = ({ post }) => {
   const { user } = useContext(AuthContext);
 
@@ -208,7 +207,7 @@ const PostCard = ({ post }) => {
                   liked ? "text-blue-600" : "text-gray-600"
                 } hover:text-blue-500 transition ${
                   liking ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+               }`}
               >
                 <FaThumbsUp />
                 {likes}
@@ -242,13 +241,25 @@ const PostCard = ({ post }) => {
             </div>
           </div>
 
-          {/* Read More */}
-          <Link
-            to={postUrl}
-            className="text-blue-600 font-medium hover:underline"
-          >
-            Read More →
-          </Link>
+          <div className="flex items-center gap-3">
+            {/* Read More */}
+            <Link
+              to={postUrl}
+              className="text-blue-600 font-medium hover:underline"
+            >
+              Read More →
+            </Link>
+
+            {/* Edit Button - only for the author */}
+            {user && post?.author?._id === user._id && (
+              <Link
+                to={`/post/${post._id}/edit`}
+                className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition"
+              >
+                Edit
+              </Link>
+            )}
+          </div>
         </footer>
       </div>
     </div>
