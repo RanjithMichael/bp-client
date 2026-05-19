@@ -96,7 +96,7 @@ const Profile = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "profilePic" && files?.length > 0) {
-      setFormData((prev) => ({ ...prev, profilePic: files[0] }));   // ✅ File input handling
+      setFormData((prev) => ({ ...prev, profilePic: files[0] }));   //File input handling
     } else if (["website", "twitter", "linkedin", "github"].includes(name)) {
       setFormData((prev) => ({
         ...prev,
@@ -108,34 +108,42 @@ const Profile = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
+  e.preventDefault();
+  try {
+    let updatedRes;
+
+    if (formData.profilePic instanceof File) {
+      // File upload flow
       const formDataObj = new FormData();
       formDataObj.append("name", formData.name);
       formDataObj.append("bio", formData.bio);
-
-      if (formData.profilePic instanceof File) {
-        formDataObj.append("profilePic", formData.profilePic);
-      } else if (typeof formData.profilePic === "string") {
-        formDataObj.append("profilePic", formData.profilePic);
-      }
-
+      formDataObj.append("profilePic", formData.profilePic);
       Object.keys(formData.socialLinks).forEach((key) => {
         formDataObj.append(`socialLinks[${key}]`, formData.socialLinks[key]);
       });
 
-      const updatedRes = await API.put("/auth/profile", formDataObj, {
+      updatedRes = await API.put("/auth/profile", formDataObj, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
-      setProfile(updatedRes.data.user);
-      setEditing(false);
-      setSuccessMsg("✅ Profile updated successfully!");
-      setTimeout(() => setSuccessMsg(""), 3000);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update profile.");
+    } else {
+      // Cloudinary URL flow
+      updatedRes = await API.put("/auth/profile", {
+        name: formData.name,
+        bio: formData.bio,
+        profilePic: formData.profilePic,   //send URL directly
+        socialLinks: formData.socialLinks,
+      });
     }
-  };
+
+    setProfile(updatedRes.data.user);
+    setEditing(false);
+    setSuccessMsg("✅ Profile updated successfully!");
+    setTimeout(() => setSuccessMsg(""), 3000);
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Failed to update profile.");
+  }
+};
+
 
   if (loading) {
     return (
