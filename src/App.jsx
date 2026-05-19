@@ -59,7 +59,7 @@ function App() {
               />
               {/* ✅ Edit Post Route (protected) */}
               <Route
-                path="/post/:id/edit"
+                path="/post/:slug/edit"
                 element={
                 <ProtectedRoute>
                 <EditPost />

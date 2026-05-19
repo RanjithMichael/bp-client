@@ -117,15 +117,15 @@ const PostCard = ({ post }) => {
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition overflow-hidden flex flex-col">
       {/* Image */}
-      <Link to={postUrl}>
-        <img
-          src={imageUrl}
-          alt={title}
-          loading="lazy"
-          onError={() => setImageError(true)}
-          className="w-full h-48 object-cover"
-        />
-      </Link>
+<Link to={postUrl}>
+  <img
+    src={imageUrl || "/images/no-image.png"}   // ✅ fallback to local image
+    alt={title}
+    loading="lazy"
+    onError={(e) => { e.target.src = "/images/no-image.png"; }} // ✅ replace broken images
+    className="w-full h-48 object-cover"
+  />
+</Link>
 
       {/* Content */}
       <div className="p-5 flex flex-col flex-grow">
@@ -169,100 +169,121 @@ const PostCard = ({ post }) => {
             ))}
           </div>
         )}
-
         {/* Footer */}
-        <footer className="flex justify-between items-end mt-auto">
-          <div className="text-xs text-gray-500 space-y-2">
-            {/* Author */}
-            <div className="flex items-center gap-2">
-              <img
-                src={avatar}
-                alt={author}
-                className="w-6 h-6 rounded-full object-cover border"
-              />
-              {username ? (
-                <Link
-                  to={`/author/${username}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {author}
-                </Link>
-              ) : (
-                author
-              )}
-            </div>
-
-            {/* Date */}
-            <div className="flex items-center gap-1">
-              <FaCalendarAlt /> {date}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3 mt-2 flex-wrap">
-              {/* Like */}
-              <button
-                onClick={handleLike}
-                disabled={liking}
-                className={`flex items-center gap-1 ${
-                  liked ? "text-blue-600" : "text-gray-600"
-                } hover:text-blue-500 transition ${
-                  liking ? "opacity-50 cursor-not-allowed" : ""
-               }`}
-              >
-                <FaThumbsUp />
-                {likes}
-              </button>
-
-              {/* Share */}
-              {["facebook", "twitter", "linkedin", "whatsapp", "email"].map(
-                (platform) => {
-                  const Icon =
-                    platform === "facebook"
-                      ? FaFacebook
-                      : platform === "twitter"
-                      ? FaTwitter
-                      : platform === "linkedin"
-                      ? FaLinkedin
-                      : platform === "whatsapp"
-                      ? FaWhatsapp
-                      : FaEnvelope;
-
-                  return (
-                    <button
-                      key={platform}
-                      onClick={() => handleShare(platform)}
-                      className="text-gray-500 hover:text-blue-600 transition"
-                    >
-                      <Icon />
-                    </button>
-                  );
-                }
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Read More */}
-            <Link
-              to={postUrl}
-              className="text-blue-600 font-medium hover:underline"
-            >
-              Read More →
-            </Link>
-
-            {/* Edit Button - only for the author */}
-            {user && post?.author?._id === user._id && (
-              <Link
-                to={`/post/${post._id}/edit`}
-                className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition"
-              >
-                Edit
-              </Link>
-            )}
-          </div>
-        </footer>
-      </div>
+<footer className="flex justify-between items-end mt-auto">
+  <div className="text-xs text-gray-500 space-y-2">
+    {/* Author */}
+    <div className="flex items-center gap-2">
+      <img
+        src={avatar}
+        alt={author}
+        className="w-6 h-6 rounded-full object-cover border"
+      />
+      {username ? (
+        <Link
+          to={`/author/${username}`}
+          className="text-blue-600 hover:underline"
+        >
+          {author}
+        </Link>
+      ) : (
+        author
+      )}
     </div>
+
+    {/* Date */}
+    <div className="flex items-center gap-1">
+      <FaCalendarAlt /> {date}
+    </div>
+
+    {/* Actions */}
+    <div className="flex items-center gap-3 mt-2 flex-wrap">
+      {/* Like */}
+      <button
+        onClick={handleLike}
+        disabled={liking}
+        className={`flex items-center gap-1 ${
+          liked ? "text-blue-600" : "text-gray-600"
+        } hover:text-blue-500 transition ${
+          liking ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+      >
+        <FaThumbsUp />
+        {likes}
+      </button>
+
+      {/* Share */}
+      {["facebook", "twitter", "linkedin", "whatsapp", "email"].map(
+        (platform) => {
+          const Icon =
+            platform === "facebook"
+              ? FaFacebook
+              : platform === "twitter"
+              ? FaTwitter
+              : platform === "linkedin"
+              ? FaLinkedin
+              : platform === "whatsapp"
+              ? FaWhatsapp
+              : FaEnvelope;
+
+          return (
+            <button
+              key={platform}
+              onClick={() => handleShare(platform)}
+              className="text-gray-500 hover:text-blue-600 transition"
+            >
+              <Icon />
+            </button>
+          );
+        }
+      )}
+    </div>
+  </div>
+
+  <div className="flex items-center gap-3">
+    {/* Read More */}
+    <Link
+      to={postUrl}
+      className="text-blue-600 font-medium hover:underline"
+    >
+      Read More →
+    </Link>
+
+    {/* Edit & Delete Buttons - only for the author */}
+    {user && post?.author?._id === user._id && (
+      <div className="flex items-center gap-2">
+        <Link
+          to={`/post/${post.slug}/edit`}
+          className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition"
+        >
+          Edit
+        </Link>
+
+        <button
+          onClick={async () => {
+            if (window.confirm("Are you sure you want to delete this post?")) {
+              try {
+                await API.delete(`/posts/slug/${post.slug}`);
+                toast.success("🗑️ Post deleted successfully!");
+                // Optionally refresh or remove from state
+                window.location.reload();
+              } catch (err) {
+                toast.error(
+                  err.response?.data?.message || "Failed to delete post"
+                );
+              }
+            }
+          }}
+          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
+        >
+          Delete
+        </button>
+      </div>
+    )}
+  </div>
+</footer>
+  </div>
+   </div>
   );
 };
 

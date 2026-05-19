@@ -41,14 +41,12 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-//RESPONSE INTERCEPTOR
-
+// RESPONSE INTERCEPTOR
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    //No response (network issue)
     if (!error.response) {
       toast.warn(`Network error: ${error.message}`);
       return Promise.reject(error);
@@ -56,7 +54,7 @@ API.interceptors.response.use(
 
     const status = error.response.status;
 
-    //Prevent infinite loop for auth endpoints
+    // Prevent infinite loop for auth endpoints
     if (
       originalRequest.url.includes("/auth/login") ||
       originalRequest.url.includes("/auth/refresh")
@@ -64,16 +62,10 @@ API.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    //HANDLE 401 (TOKEN EXPIRED)
-    if (
-       status === 401 &&
-       !originalRequest._retry &&
-       (error.response.data?.code === "TOKEN_EXPIRED" ||
-        error.response.data?.message?.toLowerCase().includes("expired"))
-    ) {
+    // Handle 401 (expired or invalid token)
+    if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      //If already refreshing → queue requests
       if (isRefreshing) {
         return new Promise((resolve) => {
           subscribeTokenRefresh((newToken) => {
@@ -87,7 +79,6 @@ API.interceptors.response.use(
 
       try {
         console.log("🔄 Refreshing token...");
-
         const { data } = await axios.post(
           `${BASE_URL}/auth/refresh`,
           {},
@@ -95,34 +86,29 @@ API.interceptors.response.use(
         );
 
         const newToken = data.accessToken;
-
         if (!newToken) throw new Error("No accessToken received");
 
-        //Save token (single source of truth)
-        localStorage.setItem("token", newToken); // optional backup
+        // Save token
+        localStorage.setItem("token", newToken);
 
-        //Update default headers
+        // Update default headers
         API.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
-        //Retry queued requests
+        // Retry queued requests
         onRefreshed(newToken);
 
         isRefreshing = false;
 
-        //Retry original request
+        // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return API(originalRequest);
       } catch (refreshError) {
         console.warn("❌ Refresh failed:", refreshError);
-
         isRefreshing = false;
         refreshSubscribers = [];
 
-        //CLEAN LOGOUT
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-
-        //Redirect to login
         window.location.href = "/login";
 
         return Promise.reject(refreshError);
@@ -132,6 +118,7 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 //HELPER METHODS
 

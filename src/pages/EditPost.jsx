@@ -3,13 +3,15 @@ import { useState, useEffect } from "react";
 import API from "../api/axiosConfig";
 
 const EditPost = () => {
-  const { id } = useParams();
+  const { slug } = useParams();   // ✅ use slug from route
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ title: "", content: "" });
 
   useEffect(() => {
-    API.get(`/posts/${id}`).then(res => setFormData(res.data));
-  }, [id]);
+    if (slug) {
+      API.get(`/posts/slug/${slug}`).then(res => setFormData(res.data));
+    }
+  }, [slug]);   
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,22 +20,22 @@ const EditPost = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await API.put(`/posts/${id}`, formData);  
-    navigate(`/post/${formData.slug}`);
+    await API.put(`/posts/slug/${slug}`, formData);   
+    navigate(`/post/${formData.slug}`);               
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <input
         name="title"
-        value={formData.title}
+        value={formData.title || ""}   // ✅ avoid undefined
         onChange={handleChange}
         className="w-full border p-2 rounded"
         placeholder="Title"
       />
       <textarea
         name="content"
-        value={formData.content}
+        value={formData.content || ""} // ✅ avoid undefined
         onChange={handleChange}
         className="w-full border p-2 rounded"
         placeholder="Content"
@@ -46,4 +48,3 @@ const EditPost = () => {
 };
 
 export default EditPost;
-
