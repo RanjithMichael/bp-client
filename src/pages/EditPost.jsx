@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import API from "../api/axiosConfig";
 
 const EditPost = () => {
-  const { slug } = useParams();   // ✅ use slug from route
+  const { slug } = useParams();   //use slug from route
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ title: "", content: "" });
 
@@ -19,23 +19,28 @@ const EditPost = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    await API.put(`/posts/slug/${slug}`, formData);   
-    navigate(`/post/${formData.slug}`);               
-  };
+  e.preventDefault();
+  try {
+    const { data } = await API.put(`/posts/slug/${slug}`, formData);
+    //use the slug from backend response
+    navigate(`/post/${data.post.slug}`);
+  } catch (err) {
+    console.error("Update failed", err);
+  }
+};
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <input
         name="title"
-        value={formData.title || ""}   // ✅ avoid undefined
+        value={formData.title || ""}   //avoid undefined
         onChange={handleChange}
         className="w-full border p-2 rounded"
         placeholder="Title"
       />
       <textarea
         name="content"
-        value={formData.content || ""} // ✅ avoid undefined
+        value={formData.content || ""} //avoid undefined
         onChange={handleChange}
         className="w-full border p-2 rounded"
         placeholder="Content"
