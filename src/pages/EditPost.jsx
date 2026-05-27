@@ -8,10 +8,17 @@ const EditPost = () => {
   const [formData, setFormData] = useState({ title: "", content: "" });
 
   useEffect(() => {
-    if (slug) {
-      API.get(`/posts/slug/${slug}`).then(res => setFormData(res.data));
-    }
-  }, [slug]);   
+  if (slug) {
+    API.get(`/posts/slug/${slug}`).then(res => {
+      const post = res.data.post; // ✅ adjust based on backend response
+      setFormData({
+        title: post.title || "",
+        content: post.content || ""
+      });
+    });
+  }
+}, [slug]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
