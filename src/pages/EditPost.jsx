@@ -47,7 +47,7 @@ const EditPost = () => {
       />
       <textarea
         name="content"
-        value={formData.content || ""} //avoid undefined
+        value={formData.content || ""}  //avoid undefined
         onChange={handleChange}
         className="w-full border p-2 rounded"
         placeholder="Content"
