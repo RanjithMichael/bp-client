@@ -108,42 +108,41 @@ const Profile = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    let updatedRes;
+    e.preventDefault();
+    try {
+      let updatedRes;
 
-    if (formData.profilePic instanceof File) {
-      // File upload flow
-      const formDataObj = new FormData();
-      formDataObj.append("name", formData.name);
-      formDataObj.append("bio", formData.bio);
-      formDataObj.append("profilePic", formData.profilePic);
-      Object.keys(formData.socialLinks).forEach((key) => {
-        formDataObj.append(`socialLinks[${key}]`, formData.socialLinks[key]);
-      });
+      if (formData.profilePic instanceof File) {
+        // File upload flow
+        const formDataObj = new FormData();
+        formDataObj.append("name", formData.name);
+        formDataObj.append("bio", formData.bio);
+        formDataObj.append("profilePic", formData.profilePic);
+        Object.keys(formData.socialLinks).forEach((key) => {
+          formDataObj.append(`socialLinks[${key}]`, formData.socialLinks[key]);
+        });
 
-      updatedRes = await API.put("/auth/profile", formDataObj, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } else {
-      // Cloudinary URL flow
-      updatedRes = await API.put("/auth/profile", {
-        name: formData.name,
-        bio: formData.bio,
-        profilePic: formData.profilePic,   //send URL directly
-        socialLinks: formData.socialLinks,
-      });
+        updatedRes = await API.put("/auth/profile", formDataObj, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        // Cloudinary URL flow
+        updatedRes = await API.put("/auth/profile", {
+          name: formData.name,
+          bio: formData.bio,
+          profilePic: formData.profilePic,   //send URL directly
+          socialLinks: formData.socialLinks,
+        });
+      }
+
+      setProfile(updatedRes.data.user);
+      setEditing(false);
+      setSuccessMsg("✅ Profile updated successfully!");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update profile.");
     }
-
-    setProfile(updatedRes.data.user);
-    setEditing(false);
-    setSuccessMsg("✅ Profile updated successfully!");
-    setTimeout(() => setSuccessMsg(""), 3000);
-  } catch (err) {
-    toast.error(err.response?.data?.message || "Failed to update profile.");
-  }
-};
-
+  };
 
   if (loading) {
     return (
@@ -180,93 +179,117 @@ const Profile = () => {
           <p className="text-gray-600 mb-2">Email: {profile?.email}</p>
 
           {editing ? (
-  <form onSubmit={handleSubmit} className="space-y-3 mt-4">
-    <input
-      name="name"
-      value={formData.name}
-      onChange={handleChange}
-      placeholder="Name"
-      className="w-full border p-2 rounded"
-    />
-    <input
-      name="bio"
-      value={formData.bio}
-      onChange={handleChange}
-      placeholder="Bio"
-      className="w-full border p-2 rounded"
-    />
+            <form onSubmit={handleSubmit} className="space-y-3 mt-4">
+              <input
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Name"
+                className="w-full border p-2 rounded"
+              />
+              <input
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Bio"
+                className="w-full border p-2 rounded"
+              />
 
-    {/* ✅ Cloudinary Upload Widget Button */}
-    <button
-      type="button"
-      onClick={() => {
-        window.cloudinary.openUploadWidget(
-          {
-            cloudName: "djle175hb",        
-            uploadPreset: "profile_preset",  
-            sources: ["local", "url", "camera"],
-            multiple: false,
-            folder: "profile_pics",
-            cropping: true, // optional
-          },
-          (error, result) => {
-            if (!error && result.event === "success") {
-              setFormData((prev) => ({
-                ...prev,
-                profilePic: result.info.secure_url, // ✅ Cloudinary URL
-              }));
-            }
-          }
-        );
-      }}
-      className="bg-purple-600 text-white px-4 py-2 rounded"
-    >
-      Upload Profile Picture
-    </button>
+              {/* ✅ Cloudinary Upload Widget Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  window.cloudinary.openUploadWidget(
+                    {
+                      cloudName: "djle175hb",        
+                      uploadPreset: "profile_preset",  
+                      sources: ["local", "url", "camera"],
+                      multiple: false,
+                      folder: "profile_pics",
+                      cropping: true, // optional
+                    },
+                    (error, result) => {
+                      if (!error && result.event === "success") {
+                        setFormData((prev) => ({
+                          ...prev,
+                          profilePic: result.info.secure_url, // ✅ Cloudinary URL
+                        }));
+                      }
+                    }
+                  );
+                }}
+                className="bg-purple-600 text-white px-4 py-2 rounded"
+              >
+                Upload Profile Picture
+              </button>
 
-    <div className="grid grid-cols-2 gap-2">
-      {Object.keys(formData.socialLinks).map((field) => (
-        <input
-          key={field}
-          name={field}
-          value={formData.socialLinks[field]}
-          onChange={handleChange}
-          placeholder={field}
-          className="w-full border p-2 rounded"
-        />
-      ))}
-    </div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.keys(formData.socialLinks).map((field) => (
+                  <input
+                    key={field}
+                    name={field}
+                    value={formData.socialLinks[field]}
+                    onChange={handleChange}
+                    placeholder={field}
+                    className="w-full border p-2 rounded"
+                  />
+                ))}
+              </div>
 
-    <div className="flex gap-2">
-      <button
-        type="submit"
-        className="bg-green-600 text-white px-4 py-2 rounded"
-      >
-        Save
-      </button>
-      <button
-        type="button"
-        onClick={() => setEditing(false)}
-        className="bg-gray-400 text-white px-4 py-2 rounded"
-      >
-        Cancel
-      </button>
-    </div>
-    {successMsg && <p className="text-green-600">{successMsg}</p>}
-  </form>
-) : (
-<>
-{profile?.bio && <p className="text-gray-700 mt-2">Bio: {profile.bio}</p>}
-  <img 
-   src={profile?.profilePic || "/default-avatar.png"} 
-   alt="Profile" 
-   className="w-32 h-32 rounded-full mt-3 object-cover border"
-   onError={(e) => { e.target.src = "/default-avatar.png"; }}
-  />
-    <button onClick={() => setEditing(true)} className="bg-blue-600 text-white px-4 py-2 rounded mt-4">Edit Profile</button>
-  </>
-  )}
- </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+              {successMsg && <p className="text-green-600">{successMsg}</p>}
+            </form>
+          ) : (
+            <>
+              {profile?.bio && <p className="text-gray-700 mt-2">Bio: {profile.bio}</p>}
+              <img 
+                src={profile?.profilePic || "/default-avatar.png"} 
+                alt="Profile" 
+                className="w-32 h-32 rounded-full mt-3 object-cover border"
+                onError={(e) => { e.target.src = "/default-avatar.png"; }}
+              />
+              <button 
+                onClick={() => setEditing(true)} 
+                className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
+              >
+                Edit Profile
+              </button>
+
+              {/* 🚫 Hide Subscribe button when viewing own profile */}
+              {profile?._id !== user?._id && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await API.post(`/subscriptions/author/${profile._id}`);
+                      toast.success("Subscribed successfully");
+                    } catch (err) {
+                      toast.error(
+                        err.response?.data?.message || "Subscription failed"
+                      );
+                    }
+                  }}
+                  className="bg-green-600 text-white px-4 py-2 rounded mt-4"
+                >
+                  Subscribe
+                </button>
+              )}
+            </>
+          )}
+        </div>
 
         {/* POSTS SECTION */}
         <div>
@@ -287,3 +310,4 @@ const Profile = () => {
 };
 
 export default Profile;
+
